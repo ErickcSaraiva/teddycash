@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from typing import List
 import uuid
 
-app = FastAPI(title="Teddy's House Backend - Mock")
+app = FastAPI(title="Teddycash Backend - Mock")
 
 # Simple in-memory store for prototyping
 USERS = {"user1": {"id": "user1", "balance": 1250}}

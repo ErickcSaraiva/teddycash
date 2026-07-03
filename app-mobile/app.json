@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "teddycash-mobile",
-    "slug": "teddycash-mobile",
+    "name": "teddycash",
+    "slug": "teddycash",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
