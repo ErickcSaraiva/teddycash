@@ -1,6 +1,6 @@
-# catchup Backend TS
+# Teddycash Backend TS
 
-Backend em Node.js, TypeScript, Express e Prisma para o projeto Teddy's House.
+Backend em Node.js, TypeScript, Express e Prisma para o projeto Teddycash.
 
 ## Estrutura
 

@@ -1,12 +1,12 @@
-# 🕹️ CatchUp: Plataforma de Fidelidade Gamificada
+# 🕹️ teddycash: Plataforma de Fidelidade Gamificada
 
-Bem-vindo ao repositório do **CatchUp**, um sistema inovador que une a experiência física de máquinas de prémios (gruas/peluches) com um ecossistema digital de fidelidade e gamificação.
+Bem-vindo ao repositório do **teddycash**, um sistema inovador que une a experiência física de máquinas de prémios (gruas/peluches) com um ecossistema digital de fidelidade e gamificação.
 
 ---
 
 ## 🚀 O Projeto
 
-O CatchUp transforma a interação tradicional com máquinas de prémios numa experiência conectada. Os utilizadores podem comprar créditos, ganhar cashback e participar em mini-jogos dentro da aplicação, mantendo o envolvimento mesmo fora do local físico.
+O teddycash transforma a interação tradicional com máquinas de prémios numa experiência conectada. Os utilizadores podem comprar créditos, ganhar cashback e participar em mini-jogos dentro da aplicação, mantendo o envolvimento mesmo fora do local físico.
 
 ### Principais Funcionalidades
 
@@ -41,8 +41,8 @@ Optámos por uma stack unificada em **TypeScript** para garantir maior produtivi
 - [x] Definição de requisitos e âmbito (MVP).
 - [x] Configuração inicial do ambiente de desenvolvimento.
 - [x] Transição para TypeScript.
-- [ ] Implementação da base de dados (PostgreSQL + Prisma).
-- [ ] Desenvolvimento dos endpoints de transação.
+- [x] Implementação da base de dados (PostgreSQL + Prisma).
+- [x] Desenvolvimento dos endpoints de transação.
 - [ ] Prototipagem da interface de jogos.
 - [ ] Integração final com ESP32.
 

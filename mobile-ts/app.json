@@ -1,9 +1,9 @@
 {
   "expo": {
-    "name": "Teddy's House",
-    "slug": "teddys-house-app",
+    "name": "teddycash",
+    "slug": "teddycash",
     "version": "0.1.0",
-    "scheme": "teddyshouse",
+    "scheme": "teddycash",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",

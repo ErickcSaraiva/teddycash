@@ -1,6 +1,6 @@
-# Teddy's House Mobile (React Native + TypeScript)
+# Teddycash Mobile (React Native + TypeScript)
 
-App móvel em Expo + TypeScript para Teddy's House.
+App móvel em Expo + TypeScript para Teddycash.
 
 ## Estrutura
 

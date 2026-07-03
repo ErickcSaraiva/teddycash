@@ -1,7 +1,7 @@
 {
-  "name": "catchup-platform",
+  "name": "teddycash",
   "version": "1.0.0",
-  "description": "Monorepo inicial para o projeto de fidelidade \"Teddy's House\".",
+  "description": "Monorepo inicial para o projeto de fidelidade \"Teddycash\".",
   "main": "index.js",
   "directories": {
     "doc": "docs"
@@ -10,7 +10,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
-  "author": "ErickSaraaiva",
+  "author": "ErickSaraiva",
   "license": "ISC",
   "devDependencies": {
     "@types/node": "^26.0.1",
