@@ -7,7 +7,7 @@ export default function App() {
     // O Provider envolve toda a App
     <ThemeProvider>
       <View style={styles.container}>
-        <Text style={styles.text}>Catchup Platform: Pronto para o Live-Ops!</Text>
+        <Text style={styles.text}>teddycash Platform: Pronto para o Live-Ops!</Text>
         {/* Aqui entrará o teu Navigation Container posteriormente */}
       </View>
     </ThemeProvider>

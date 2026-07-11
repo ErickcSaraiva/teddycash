@@ -1,5 +1,5 @@
 import { DarkTheme, DefaultTheme, ThemeProvider as NavigationThemeProvider } from '@react-navigation/native';
-import { Stack, Redirect } from 'expo-router';
+import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
@@ -15,14 +15,32 @@ export default function RootLayout() {
 
   return (
     <LiveOpsThemeProvider>
-      <NavigationThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+      <NavigationThemeProvider
+        value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}
+      >
         <Stack>
-          <Stack.Screen name="login" options={{ headerShown: false }} />
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+          <Stack.Screen 
+            name="login" 
+            options={{ headerShown:false }} 
+          />
+
+          <Stack.Screen 
+            name="(tabs)" 
+            options={{ headerShown:false }} 
+          />
+
+          <Stack.Screen 
+            name="modal" 
+            options={{
+              presentation:'modal',
+              title:'Modal'
+            }}
+          />
+
         </Stack>
-        <Redirect href="/login" />
+
         <StatusBar style="auto" />
+
       </NavigationThemeProvider>
     </LiveOpsThemeProvider>
   );
