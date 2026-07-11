@@ -51,8 +51,7 @@ const TX_LABELS: Record<string, string> = {
   CREDIT_PURCHASE: 'Compra de créditos',
   MACHINE_UNLOCK: 'Uso em máquina',
 };
-
-export default function BalanceScreen({ userId = 'user1' }: Props) {
+export default function BalanceScreen({ userId = 'aac89278-fbcd-40eb-9abb-5c7c6cee0058' }: Props) {
   const { theme, isLoading: themeLoading } = useTheme();
   const palette = getPalette(theme);
   const styles = makeStyles(palette);

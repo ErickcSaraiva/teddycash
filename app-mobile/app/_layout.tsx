@@ -1,28 +1,27 @@
 import { DarkTheme, DefaultTheme, ThemeProvider as NavigationThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
+import { Stack, Redirect } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
-// Importa o teu contexto de Live-Ops
-import { ThemeProvider as LiveOpsThemeProvider } from '@/src/contexts/ThemeContext'; 
+import { ThemeProvider as LiveOpsThemeProvider } from '@/src/contexts/ThemeContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export const unstable_settings = {
-  anchor: '(tabs)',
+  anchor: 'login',
 };
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
 
   return (
-    // 1. O teu Live-Ops Provider fica no topo (exterior)
     <LiveOpsThemeProvider>
-      {/* 2. O ThemeProvider do Navigation fica dentro */}
       <NavigationThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <Stack>
+          <Stack.Screen name="login" options={{ headerShown: false }} />
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
         </Stack>
+        <Redirect href="/login" />
         <StatusBar style="auto" />
       </NavigationThemeProvider>
     </LiveOpsThemeProvider>
