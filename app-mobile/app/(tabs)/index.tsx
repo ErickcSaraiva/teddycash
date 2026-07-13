@@ -1,79 +1,73 @@
-import { StyleSheet, Text, View, ActivityIndicator, TouchableOpacity } from 'react-native';
-// 1. Importar o useRouter do Expo Router
-import { useRouter } from 'expo-router'; 
-// Vamos buscar o Custom Hook que criaste!
-import { useTheme } from '@/src/contexts/ThemeContext'; 
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { useTheme } from '@/src/contexts/ThemeContext';
+import { getPalette } from '@/src/theme/palettes'; // 1. Importamos o tradutor de paletas
 
 export default function HomeScreen() {
-  const { theme, particles, isLoading } = useTheme();
-  
-  // 2. Inicializar o router para podermos viajar entre ecrãs
-  const router = useRouter(); 
+  const { theme } = useTheme(); 
+  const palette = getPalette(theme); // 2. Transformamos a string (ex: 'default') nas cores reais!
 
-  // Enquanto o teu backend (Express) pensa, mostramos o ecrã de carregamento
-  if (isLoading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#ff4500" />
-        <Text style={{ marginTop: 10 }}>A sincronizar Live-Ops com o servidor...</Text>
-      </View>
-    );
-  }
-
-  // Aqui a magia acontece: a cor de fundo muda com base no 'theme'
   return (
-    <View style={[styles.container, theme === 'christmas' ? styles.bgChristmas : styles.bgDefault]}>
-      {/* O NOME OFICIAL AQUI!   👇 */}
-      <Text style={styles.title}>TeddyCash 🐻</Text>
-      <Text style={styles.subtitle}>Tema Atual: {theme.toUpperCase()}</Text>
-      <Text style={styles.info}>Partículas Ativas: {particles}</Text>
+    <ScrollView style={[styles.container, { backgroundColor: palette.background }]}>
+      <Text style={[styles.greeting, { color: palette.text }]}>Olá, Erick 👋</Text>
+      
+      {/* Card de Saldo e Moedas */}
+      <View style={[styles.card, { backgroundColor: palette.card }]}>
+        <Text style={{ color: palette.softText }}>Saldo disponível</Text>
+        <Text style={[styles.balance, { color: palette.primary }]}>R$ 0,00</Text>
+        
+        <View style={styles.divider} />
+        
+        <Text style={{ color: palette.softText }}>Moedas</Text>
+        <Text style={[styles.coins, { color: palette.accent }]}>0 🪙</Text>
+      </View>
 
-      {/* 3. O nosso novo botão de Jogo! */}
-      <TouchableOpacity 
-        style={styles.playButton}
-        onPress={() => router.push('/game')} // <-- Navega para a rota do jogo
-      >
-        <Text style={styles.playButtonText}>
-          🎮 Jogar e Ganhar Moedas!
-        </Text>
-      </TouchableOpacity>
-    </View>
+      {/* Título das Ações */}
+      <Text style={[styles.sectionTitle, { color: palette.text }]}>
+        O que vamos fazer hoje?
+      </Text>
+      
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  center: { 
+  container: { 
     flex: 1, 
-    justifyContent: 'center', 
-    alignItems: 'center' 
+    padding: 20 
   },
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+  greeting: { 
+    fontSize: 24, 
+    fontWeight: 'bold', 
+    marginTop: 60, 
+    marginBottom: 20 
   },
-  bgDefault: { backgroundColor: '#f0f8ff' },   // Azul clarinho (Default)
-  bgChristmas: { backgroundColor: '#ffefd5' }, // Tom pastel quente (Natal)
-  title: { fontSize: 28, fontWeight: 'bold', marginBottom: 10 },
-  subtitle: { fontSize: 18, marginBottom: 5, color: '#333' },
-  // Adicionei uma margem inferior (marginBottom) para afastar o texto do botão
-  info: { fontSize: 14, color: '#666', fontStyle: 'italic', marginBottom: 40 },
-  
-  // Estilos novinhos para o botão ficar com ar de jogo
-  playButton: {
-    backgroundColor: '#3D5AFE',
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    borderRadius: 25,
-    elevation: 5, // Dá uma sombra no Android
-    shadowColor: '#000', // Sombra no iOS
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+  card: { 
+    padding: 24, 
+    borderRadius: 20, 
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 3
   },
-  playButtonText: {
-    color: '#FFFFFF',
+  balance: { 
+    fontSize: 36, 
+    fontWeight: '800', 
+    marginVertical: 8 
+  },
+  coins: { 
+    fontSize: 24, 
+    fontWeight: '700' 
+  },
+  divider: { 
+    height: 1, 
+    backgroundColor: '#EEEEEE', 
+    marginVertical: 15 
+  },
+  sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '700',
+    marginTop: 30,
+    marginBottom: 15
   }
 });
