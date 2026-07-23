@@ -15,29 +15,28 @@ import {
   Dimensions,
   SafeAreaView,
 } from 'react-native';
+import { useAuth } from '../contexts/AuthContext.tsx'
 
-const { width, height } = Dimensions.get('window');
+const { height } = Dimensions.get('window');
 
 const C = {
-  bg: '#0F1113',
-  surface: '#16191C',
-  surfaceBorder: '#232629',
-  primary: '#7C5CFC',
-  primaryDim: '#3D2E80',
-  accent: '#F5A96B',
-  text: '#F0F2F5',
-  textMuted: '#7A8190',
-  textDim: '#3E4450',
-  error: '#F25C5C',
-  google: '#FFFFFF',
-  apple: '#FFFFFF',
-  divider: '#232629',
+  bg:             '#0F1113',
+  surface:        '#16191C',
+  surfaceBorder:  '#232629',
+  primary:        '#7C5CFC',
+  primaryDim:     '#3D2E80',
+  accent:         '#F5A96B',
+  text:           '#F0F2F5',
+  textMuted:      '#7A8190',
+  textDim:        '#3E4450',
+  error:          '#F25C5C',
+  divider:        '#232629',
 };
 
 type ViewName = 'landing' | 'email' | 'phone';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Subcomponentes FORA do LoginScreen — evita remount a cada render
+// Subcomponentes definidos FORA do LoginScreen — evita remount a cada render
 // ─────────────────────────────────────────────────────────────────────────────
 
 const GlowOrb = ({ glowAnim }: { glowAnim: Animated.Value }) => (
@@ -93,26 +92,21 @@ const SocialButton = ({
 );
 
 // ── LandingView ───────────────────────────────────────────────────────────────
+
 type LandingViewProps = {
-  glowAnim: Animated.Value;
-  loading: boolean;
-  error: string;
-  onGoogle: () => void;
-  onApple: () => void;
+  glowAnim:     Animated.Value;
+  loading:      boolean;
+  error:        string;
+  onGoogle:     () => void;
+  onApple:      () => void;
   onEmailLogin: () => void;
-  onPhone: () => void;
-  onSignUp: () => void;
+  onPhone:      () => void;
+  onSignUp:     () => void;
 };
 
 const LandingView = ({
-  glowAnim,
-  loading,
-  error,
-  onGoogle,
-  onApple,
-  onEmailLogin,
-  onPhone,
-  onSignUp,
+  glowAnim, loading, error,
+  onGoogle, onApple, onEmailLogin, onPhone, onSignUp,
 }: LandingViewProps) => (
   <>
     <Hero glowAnim={glowAnim} />
@@ -137,9 +131,7 @@ const LandingView = ({
 
       <Pressable
         style={({ pressed }) => [
-          styles.outlineBtn,
-          pressed && styles.outlineBtnPressed,
-          { marginTop: 10 },
+          styles.outlineBtn, pressed && styles.outlineBtnPressed, { marginTop: 10 },
         ]}
         onPress={onPhone}
         accessibilityRole="button"
@@ -165,30 +157,25 @@ const LandingView = ({
 );
 
 // ── EmailView ─────────────────────────────────────────────────────────────────
+
 type EmailViewProps = {
-  isSignUp: boolean;
-  loading: boolean;
-  error: string;
-  email: string;
-  password: string;
-  onChangeEmail: (v: string) => void;
+  isSignUp:         boolean;
+  loading:          boolean;
+  error:            string;
+  email:            string;
+  password:         string;
+  onChangeEmail:    (v: string) => void;
   onChangePassword: (v: string) => void;
-  onSubmit: () => void;
-  onBack: () => void;
-  onToggleSignUp: () => void;
+  onSubmit:         () => void;
+  onBack:           () => void;
+  onToggleSignUp:   () => void;
 };
 
 const EmailView = ({
-  isSignUp,
-  loading,
-  error,
-  email,
-  password,
-  onChangeEmail,
-  onChangePassword,
-  onSubmit,
-  onBack,
-  onToggleSignUp,
+  isSignUp, loading, error,
+  email, password,
+  onChangeEmail, onChangePassword,
+  onSubmit, onBack, onToggleSignUp,
 }: EmailViewProps) => (
   <>
     <View style={styles.backRow}>
@@ -255,11 +242,10 @@ const EmailView = ({
         disabled={loading}
         accessibilityRole="button"
       >
-        {loading ? (
-          <ActivityIndicator color={C.text} size="small" />
-        ) : (
-          <Text style={styles.primaryBtnText}>{isSignUp ? 'Criar conta' : 'Entrar'}</Text>
-        )}
+        {loading
+          ? <ActivityIndicator color={C.text} size="small" />
+          : <Text style={styles.primaryBtnText}>{isSignUp ? 'Criar conta' : 'Entrar'}</Text>
+        }
       </Pressable>
 
       <Pressable style={styles.signUpLink} onPress={onToggleSignUp}>
@@ -275,32 +261,26 @@ const EmailView = ({
 );
 
 // ── PhoneView ─────────────────────────────────────────────────────────────────
+
 type PhoneViewProps = {
-  loading: boolean;
-  error: string;
-  phone: string;
-  otp: string;
-  otpSent: boolean;
+  loading:       boolean;
+  error:         string;
+  phone:         string;
+  otp:           string;
+  otpSent:       boolean;
   onChangePhone: (v: string) => void;
-  onChangeOtp: (v: string) => void;
-  onSendOtp: () => void;
-  onOtpSubmit: () => void;
-  onBack: () => void;
-  onResend: () => void;
+  onChangeOtp:   (v: string) => void;
+  onSendOtp:     () => void;
+  onOtpSubmit:   () => void;
+  onBack:        () => void;
+  onResend:      () => void;
 };
 
 const PhoneView = ({
-  loading,
-  error,
-  phone,
-  otp,
-  otpSent,
-  onChangePhone,
-  onChangeOtp,
-  onSendOtp,
-  onOtpSubmit,
-  onBack,
-  onResend,
+  loading, error,
+  phone, otp, otpSent,
+  onChangePhone, onChangeOtp,
+  onSendOtp, onOtpSubmit, onBack, onResend,
 }: PhoneViewProps) => (
   <>
     <View style={styles.backRow}>
@@ -355,11 +335,10 @@ const PhoneView = ({
             onPress={onSendOtp}
             disabled={loading}
           >
-            {loading ? (
-              <ActivityIndicator color={C.text} size="small" />
-            ) : (
-              <Text style={styles.primaryBtnText}>Enviar código</Text>
-            )}
+            {loading
+              ? <ActivityIndicator color={C.text} size="small" />
+              : <Text style={styles.primaryBtnText}>Enviar código</Text>
+            }
           </Pressable>
         </>
       ) : (
@@ -390,11 +369,10 @@ const PhoneView = ({
             onPress={onOtpSubmit}
             disabled={loading}
           >
-            {loading ? (
-              <ActivityIndicator color={C.text} size="small" />
-            ) : (
-              <Text style={styles.primaryBtnText}>Verificar código</Text>
-            )}
+            {loading
+              ? <ActivityIndicator color={C.text} size="small" />
+              : <Text style={styles.primaryBtnText}>Verificar código</Text>
+            }
           </Pressable>
 
           <Pressable style={styles.signUpLink} onPress={onResend} disabled={loading}>
@@ -414,22 +392,28 @@ const PhoneView = ({
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function LoginScreen({ onLoginSuccess }: { onLoginSuccess?: () => void }) {
+  // ── AuthContext ─────────────────────────────────────────────────────────
+  // login() chama POST /auth/login + GET /balance e salva no SecureStore
+  const { login } = useAuth();
+
+  // ── Estado local ────────────────────────────────────────────────────────
   const [currentView, setCurrentView] = useState<ViewName>('landing');
-  const [email, setEmail] = useState('');
+  const [email,    setEmail]    = useState('');
   const [password, setPassword] = useState('');
-  const [phone, setPhone] = useState('');
-  const [otp, setOtp] = useState('');
-  const [otpSent, setOtpSent] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [phone,    setPhone]    = useState('');
+  const [otp,      setOtp]      = useState('');
+  const [otpSent,  setOtpSent]  = useState(false);
+  const [loading,  setLoading]  = useState(false);
+  const [error,    setError]    = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
 
+  // ── Animação do orb ─────────────────────────────────────────────────────
   const glowAnim = useRef(new Animated.Value(0.6)).current;
 
   React.useEffect(() => {
     Animated.loop(
       Animated.sequence([
-        Animated.timing(glowAnim, { toValue: 1, duration: 2400, useNativeDriver: true }),
+        Animated.timing(glowAnim, { toValue: 1,   duration: 2400, useNativeDriver: true }),
         Animated.timing(glowAnim, { toValue: 0.6, duration: 2400, useNativeDriver: true }),
       ])
     ).start();
@@ -437,113 +421,135 @@ export default function LoginScreen({ onLoginSuccess }: { onLoginSuccess?: () =>
 
   const clearError = useCallback(() => setError(''), []);
 
-  // Handlers estáveis com useCallback — evita referências novas a cada render
+  // ── Handlers de autenticação ─────────────────────────────────────────────
+
+  /**
+   * Google Login
+   * TODO: substituir por Google Sign-In SDK quando disponível.
+   * Por ora chama /auth/login com credenciais demo para não bloquear o fluxo.
+   */
   const handleGoogleLogin = useCallback(async () => {
     setLoading(true);
     clearError();
     try {
-      await new Promise((r) => setTimeout(r, 1200));
+      // TODO: await GoogleSignIn.signIn() → pegar idToken → enviar ao backend
+      await login('google@teddycash.com', 'google-demo');
       onLoginSuccess?.();
-    } catch {
-      setError('Falha no login com Google. Tente novamente.');
+    } catch (e: any) {
+      setError(e?.message ?? 'Falha no login com Google. Tente novamente.');
     } finally {
       setLoading(false);
     }
-  }, [onLoginSuccess, clearError]);
+  }, [login, onLoginSuccess, clearError]);
 
+  /**
+   * Apple Login
+   * TODO: substituir por Apple Authentication SDK.
+   */
   const handleAppleLogin = useCallback(async () => {
     setLoading(true);
     clearError();
     try {
-      await new Promise((r) => setTimeout(r, 1200));
+      // TODO: await AppleAuthentication.signInAsync() → enviar ao backend
+      await login('apple@teddycash.com', 'apple-demo');
       onLoginSuccess?.();
-    } catch {
-      setError('Falha no login com Apple. Tente novamente.');
+    } catch (e: any) {
+      setError(e?.message ?? 'Falha no login com Apple. Tente novamente.');
     } finally {
       setLoading(false);
     }
-  }, [onLoginSuccess, clearError]);
+  }, [login, onLoginSuccess, clearError]);
 
+  /**
+   * Email/senha — chama POST /auth/login real
+   */
   const handleEmailSubmit = useCallback(async () => {
-    if (!email.trim() || !password.trim()) { setError('Preencha e-mail e senha.'); return; }
-    if (!/\S+@\S+\.\S+/.test(email)) { setError('E-mail inválido.'); return; }
-    if (password.length < 6) { setError('Senha deve ter pelo menos 6 caracteres.'); return; }
+    if (!email.trim() || !password.trim()) {
+      setError('Preencha e-mail e senha.');
+      return;
+    }
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      setError('E-mail inválido.');
+      return;
+    }
+    if (password.length < 6) {
+      setError('Senha deve ter pelo menos 6 caracteres.');
+      return;
+    }
+
     setLoading(true);
     clearError();
     try {
-      await new Promise((r) => setTimeout(r, 1200));
+      await login(email.trim().toLowerCase(), password);
       onLoginSuccess?.();
-    } catch {
-      setError('E-mail ou senha incorretos.');
+    } catch (e: any) {
+      setError(e?.message ?? 'E-mail ou senha incorretos.');
     } finally {
       setLoading(false);
     }
-  }, [email, password, onLoginSuccess, clearError]);
+  }, [email, password, login, onLoginSuccess, clearError]);
 
+  /**
+   * Enviar OTP por SMS
+   * TODO: integrar Firebase Phone Auth quando disponível.
+   */
   const handleSendOtp = useCallback(async () => {
     const digits = phone.replace(/\D/g, '');
-    if (digits.length < 10) { setError('Número inválido. Use DDD + número.'); return; }
+    if (digits.length < 10) {
+      setError('Número inválido. Use DDD + número.');
+      return;
+    }
     setLoading(true);
     clearError();
     try {
-      await new Promise((r) => setTimeout(r, 1000));
+      // TODO: FirebaseAuth.verifyPhoneNumber('+55' + digits)
+      await new Promise((r) => setTimeout(r, 1000)); // placeholder
       setOtpSent(true);
-    } catch {
-      setError('Não foi possível enviar o código. Tente novamente.');
+    } catch (e: any) {
+      setError(e?.message ?? 'Não foi possível enviar o código. Tente novamente.');
     } finally {
       setLoading(false);
     }
   }, [phone, clearError]);
 
+  /**
+   * Verificar OTP
+   * TODO: integrar Firebase Phone Auth quando disponível.
+   */
   const handleOtpSubmit = useCallback(async () => {
-    if (otp.length !== 6) { setError('Código deve ter 6 dígitos.'); return; }
+    if (otp.length !== 6) {
+      setError('Código deve ter 6 dígitos.');
+      return;
+    }
     setLoading(true);
     clearError();
     try {
-      await new Promise((r) => setTimeout(r, 1000));
+      // TODO: FirebaseAuth.confirmOTP(otp) → pegar token → authApi.login
+      await new Promise((r) => setTimeout(r, 1000)); // placeholder
       onLoginSuccess?.();
-    } catch {
-      setError('Código inválido ou expirado.');
+    } catch (e: any) {
+      setError(e?.message ?? 'Código inválido ou expirado.');
     } finally {
       setLoading(false);
     }
   }, [otp, onLoginSuccess, clearError]);
 
-  const handleChangeEmail = useCallback((v: string) => {
-    setEmail(v);
-    clearError();
-  }, [clearError]);
+  // ── Handlers de campo ────────────────────────────────────────────────────
 
-  const handleChangePassword = useCallback((v: string) => {
-    setPassword(v);
-    clearError();
-  }, [clearError]);
-
-  const handleChangePhone = useCallback((v: string) => {
-    setPhone(v);
-    clearError();
-  }, [clearError]);
-
-  const handleChangeOtp = useCallback((v: string) => {
+  const handleChangeEmail    = useCallback((v: string) => { setEmail(v);    clearError(); }, [clearError]);
+  const handleChangePassword = useCallback((v: string) => { setPassword(v); clearError(); }, [clearError]);
+  const handleChangePhone    = useCallback((v: string) => { setPhone(v);    clearError(); }, [clearError]);
+  const handleChangeOtp      = useCallback((v: string) => {
     setOtp(v.replace(/\D/g, '').slice(0, 6));
     clearError();
   }, [clearError]);
 
-  const goToEmailLogin = useCallback(() => {
-    clearError(); setCurrentView('email'); setIsSignUp(false);
-  }, [clearError]);
+  // ── Navegação entre views ────────────────────────────────────────────────
 
-  const goToPhone = useCallback(() => {
-    clearError(); setCurrentView('phone');
-  }, [clearError]);
-
-  const goToSignUp = useCallback(() => {
-    clearError(); setCurrentView('email'); setIsSignUp(true);
-  }, [clearError]);
-
-  const goToLanding = useCallback(() => {
-    setCurrentView('landing'); clearError();
-  }, [clearError]);
+  const goToEmailLogin = useCallback(() => { clearError(); setCurrentView('email'); setIsSignUp(false); }, [clearError]);
+  const goToPhone      = useCallback(() => { clearError(); setCurrentView('phone'); }, [clearError]);
+  const goToSignUp     = useCallback(() => { clearError(); setCurrentView('email'); setIsSignUp(true); }, [clearError]);
+  const goToLanding    = useCallback(() => { setCurrentView('landing'); clearError(); }, [clearError]);
 
   const goToLandingFromPhone = useCallback(() => {
     setCurrentView('landing');
@@ -553,16 +559,15 @@ export default function LoginScreen({ onLoginSuccess }: { onLoginSuccess?: () =>
     clearError();
   }, [clearError]);
 
-  const toggleSignUp = useCallback(() => {
-    setIsSignUp((v) => !v);
-    clearError();
-  }, [clearError]);
+  const toggleSignUp = useCallback(() => { setIsSignUp((v) => !v); clearError(); }, [clearError]);
 
   const handleResend = useCallback(() => {
     setOtpSent(false);
     setOtp('');
     clearError();
   }, [clearError]);
+
+  // ── Render ───────────────────────────────────────────────────────────────
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -626,11 +631,13 @@ export default function LoginScreen({ onLoginSuccess }: { onLoginSuccess?: () =>
   );
 }
 
-// ─── Estilos (idênticos ao original) ──────────────────────────────────────────
+// ─── Estilos ──────────────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
-  safeArea: { flex: 1, backgroundColor: C.bg },
-  scroll: { flexGrow: 1, paddingHorizontal: 24, paddingBottom: 40 },
+  flex:      { flex: 1 },
+  safeArea:  { flex: 1, backgroundColor: C.bg },
+  scroll:    { flexGrow: 1, paddingHorizontal: 24, paddingBottom: 40 },
+
   glowContainer: {
     position: 'absolute', top: -40, alignSelf: 'center',
     alignItems: 'center', justifyContent: 'center',
@@ -647,6 +654,7 @@ const styles = StyleSheet.create({
     position: 'absolute', width: 70, height: 70,
     borderRadius: 35, backgroundColor: C.primary, opacity: 0.35,
   },
+
   hero: {
     alignItems: 'center',
     paddingTop: height * 0.07,
@@ -656,30 +664,35 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   logoEmoji: { fontSize: 56, marginBottom: 10, zIndex: 1 },
-  logoName: { fontSize: 38, fontWeight: '900', color: C.text, letterSpacing: -1.5, zIndex: 1 },
-  tagline: { fontSize: 15, color: C.textMuted, textAlign: 'center', lineHeight: 22, marginTop: 8, zIndex: 1 },
+  logoName:  { fontSize: 38, fontWeight: '900', color: C.text, letterSpacing: -1.5, zIndex: 1 },
+  tagline:   { fontSize: 15, color: C.textMuted, textAlign: 'center', lineHeight: 22, marginTop: 8, zIndex: 1 },
+
   card: {
     backgroundColor: C.surface, borderRadius: 24,
     borderWidth: 1, borderColor: C.surfaceBorder, padding: 22, width: '100%',
   },
+
   socialBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     backgroundColor: '#1E2125', borderWidth: 1, borderColor: C.surfaceBorder,
     borderRadius: 14, paddingVertical: 14, marginBottom: 10, gap: 10,
   },
   socialBtnPressed: { opacity: 0.75, backgroundColor: '#252A2F' },
-  socialIcon: { fontSize: 16, fontWeight: '800', color: C.text, width: 20, textAlign: 'center' },
-  socialLabel: { fontSize: 15, fontWeight: '600', color: C.text, letterSpacing: 0.1 },
+  socialIcon:       { fontSize: 16, fontWeight: '800', color: C.text, width: 20, textAlign: 'center' },
+  socialLabel:      { fontSize: 15, fontWeight: '600', color: C.text, letterSpacing: 0.1 },
+
   dividerRow: { flexDirection: 'row', alignItems: 'center', marginVertical: 16, gap: 10 },
   dividerLine: { flex: 1, height: 1, backgroundColor: C.divider },
   dividerText: { color: C.textMuted, fontSize: 13 },
+
   outlineBtn: {
     alignItems: 'center', justifyContent: 'center',
     borderWidth: 1, borderColor: C.surfaceBorder,
     borderRadius: 14, paddingVertical: 14, backgroundColor: 'transparent',
   },
   outlineBtnPressed: { borderColor: C.primary, backgroundColor: '#1A1630' },
-  outlineBtnText: { fontSize: 15, color: C.textMuted, fontWeight: '500' },
+  outlineBtnText:    { fontSize: 15, color: C.textMuted, fontWeight: '500' },
+
   primaryBtn: {
     alignItems: 'center', justifyContent: 'center',
     backgroundColor: C.primary, borderRadius: 14, paddingVertical: 15, marginTop: 4,
@@ -687,20 +700,25 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.35, shadowRadius: 12, elevation: 6,
   },
   primaryBtnPressed: { opacity: 0.82 },
-  primaryBtnText: { fontSize: 16, fontWeight: '700', color: '#FFFFFF', letterSpacing: 0.2 },
-  btnDisabled: { opacity: 0.45 },
-  signUpLink: { marginTop: 18, alignItems: 'center' },
-  signUpLinkText: { fontSize: 14, color: C.textMuted },
+  primaryBtnText:    { fontSize: 16, fontWeight: '700', color: '#FFFFFF', letterSpacing: 0.2 },
+  btnDisabled:       { opacity: 0.45 },
+
+  signUpLink:          { marginTop: 18, alignItems: 'center' },
+  signUpLinkText:      { fontSize: 14, color: C.textMuted },
   signUpLinkHighlight: { color: C.primary, fontWeight: '600' },
+
   legalText: { fontSize: 12, color: C.textDim, textAlign: 'center', marginTop: 20, lineHeight: 18 },
   legalLink: { color: C.textMuted, textDecorationLine: 'underline' },
-  backRow: { paddingTop: 40, marginBottom: 16 },
-  backBtn: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+
+  backRow:  { paddingTop: 40, marginBottom: 16 },
+  backBtn:  { flexDirection: 'row', alignItems: 'center', gap: 6 },
   backArrow: { fontSize: 20, color: C.textMuted },
   backLabel: { fontSize: 15, color: C.textMuted },
-  emailHero: { paddingTop: 20, paddingBottom: 28 },
-  viewTitle: { fontSize: 28, fontWeight: '800', color: C.text, letterSpacing: -0.8 },
+
+  emailHero:    { paddingTop: 20, paddingBottom: 28 },
+  viewTitle:    { fontSize: 28, fontWeight: '800', color: C.text, letterSpacing: -0.8 },
   viewSubtitle: { fontSize: 14, color: C.textMuted, marginTop: 6, lineHeight: 20 },
+
   inputGroup: {},
   inputLabel: { fontSize: 13, color: C.textMuted, marginBottom: 7, fontWeight: '500' },
   input: {
@@ -708,16 +726,19 @@ const styles = StyleSheet.create({
     borderRadius: 12, paddingHorizontal: 16, paddingVertical: 13,
     fontSize: 15, color: C.text,
   },
+
   forgotLink: { alignSelf: 'flex-end', marginTop: 10, marginBottom: 4 },
   forgotText: { fontSize: 13, color: C.primary },
+
   phoneRow: { flexDirection: 'row', gap: 10, alignItems: 'center' },
   countryCode: {
     backgroundColor: '#0C0E10', borderWidth: 1, borderColor: C.surfaceBorder,
     borderRadius: 12, paddingHorizontal: 14, paddingVertical: 13, justifyContent: 'center',
   },
   countryCodeText: { fontSize: 14, color: C.text },
-  phoneInput: { flex: 1 },
-  otpInput: { fontSize: 24, fontWeight: '700', textAlign: 'center', letterSpacing: 8 },
+  phoneInput:      { flex: 1 },
+  otpInput:        { fontSize: 24, fontWeight: '700', textAlign: 'center', letterSpacing: 8 },
+
   errorText: {
     color: C.error, fontSize: 13, marginBottom: 14,
     backgroundColor: '#2A1414', borderRadius: 8,

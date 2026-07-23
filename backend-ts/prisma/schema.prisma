@@ -14,16 +14,16 @@ datasource db {
 
 // Tabela de Utilizadores (Fidelidade, Saldo e Cashback)
 model User {
-  id           String        @id @default(uuid())
-  username     String        @unique
-  email        String        @unique
-  balance      Float         @default(0.0)
-  cashback     Float         @default(0.0)
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  id            String        @id @default(uuid())
+  username      String        @unique
+  email         String        @unique
+  balance       Float         @default(0.0)
+  cashback      Float         @default(0.0)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
   
-  transactions Transaction[] 
-  gameSessions GameSession[] // Relacionamento com os jogos
+  transactions  Transaction[] 
+  gameSessions  GameSession[] // Relacionamento com os jogos
 }
 
 // Tabela de Transações (Extrato e Segurança)

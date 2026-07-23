@@ -15,7 +15,9 @@
     "updates": {
       "fallbackToCacheTimeout": 0
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTabletMode": true
     },
@@ -32,9 +34,12 @@
       [
         "expo-font",
         {
-          "fonts": ["./assets/fonts/*.ttf"]
+          "fonts": [
+            "./assets/fonts/*.ttf"
+          ]
         }
-      ]
+      ],
+      "expo-secure-store"
     ]
   }
 }
