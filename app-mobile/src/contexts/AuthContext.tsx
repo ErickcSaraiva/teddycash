@@ -1,179 +1,147 @@
+// app-mobile/src/contexts/AuthContext.tsx
+
 import React, {
   createContext,
-  useState,
+  useCallback,
   useContext,
-  useEffect
+  useEffect,
+  useRef,
+  useState,
 } from 'react';
-
 import * as SecureStore from 'expo-secure-store';
-
 import { authApi } from '../services/authApi';
 
+// ── Chaves do SecureStore ─────────────────────────────────────────────────────
 
-interface AuthContextData {
-  token: string | null;
-  userId: string | null;
+const KEY_TOKEN   = 'teddycash_token';
+const KEY_USER_ID = 'teddycash_user_id';
 
-  login(
-    email: string,
-    password: string
-  ): Promise<void>;
+// ── Tipos ─────────────────────────────────────────────────────────────────────
 
-  signOut(): Promise<void>;
-
-  isLoading: boolean;
+interface AuthState {
+  token:      string | null;
+  userId:     string | null;
+  balance:    number | null;
+  /** true durante o boot (verificando sessão salva no SecureStore) */
+  loading:    boolean;
+  /** true durante chamadas de saldo após o boot */
+  refreshing: boolean;
 }
 
+interface AuthContextValue extends AuthState {
+  login:          (email: string, password: string) => Promise<void>;
+  logout:         () => Promise<void>;
+  refreshBalance: () => Promise<void>;
+}
 
-const AuthContext = createContext<AuthContextData>(
-  {} as AuthContextData
-);
+// ── Context ───────────────────────────────────────────────────────────────────
 
+const AuthContext = createContext<AuthContextValue | null>(null);
 
+// ── Provider ──────────────────────────────────────────────────────────────────
 
-export function AuthProvider({
-  children
-}: {
-  children: React.ReactNode
-}) {
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [state, setState] = useState<AuthState>({
+    token:      null,
+    userId:     null,
+    balance:    null,
+    loading:    true,   // começa true; vira false depois do boot
+    refreshing: false,
+  });
 
-  const [token, setToken] = useState<string | null>(null);
-
-  const [userId, setUserId] = useState<string | null>(null);
-
-  const [isLoading, setIsLoading] = useState(true);
-
-
-
+  // Evita setState em componente desmontado
+  const mounted = useRef(true);
   useEffect(() => {
-
-    async function loadAuth() {
-
-      try {
-
-        const storedToken =
-          await SecureStore.getItemAsync(
-            'teddycash_token'
-          );
-
-
-        const storedUser =
-          await SecureStore.getItemAsync(
-            'teddycash_user'
-          );
-
-
-        if (storedToken) {
-          setToken(storedToken);
-        }
-
-
-        if (storedUser) {
-          setUserId(storedUser);
-        }
-
-
-      } catch(error) {
-
-        console.log(
-          'Erro carregando autenticação:',
-          error
-        );
-
-      } finally {
-
-        setIsLoading(false);
-
-      }
-
-    }
-
-
-    loadAuth();
-
+    return () => { mounted.current = false; };
   }, []);
 
+  // ── Boot: restaurar sessão salva ───────────────────────────────────────────
+  useEffect(() => {
+    (async () => {
+      try {
+        const [token, userId] = await Promise.all([
+          SecureStore.getItemAsync(KEY_TOKEN),
+          SecureStore.getItemAsync(KEY_USER_ID),
+        ]);
 
+        if (token && userId) {
+          // Sessão encontrada — busca saldo imediatamente
+          const { balance } = await authApi.getBalance(userId, token);
+          if (mounted.current) {
+            setState({ token, userId, balance, loading: false, refreshing: false });
+          }
+        } else {
+          if (mounted.current) setState((s) => ({ ...s, loading: false }));
+        }
+      } catch {
+        // Token expirado ou backend offline — limpa sessão corrompida
+        await SecureStore.deleteItemAsync(KEY_TOKEN).catch(() => {});
+        await SecureStore.deleteItemAsync(KEY_USER_ID).catch(() => {});
+        if (mounted.current) setState((s) => ({ ...s, loading: false }));
+      }
+    })();
+  }, []);
 
-  async function login(
-    email:string,
-    password:string
-  ) {
+  // ── login ─────────────────────────────────────────────────────────────────
+  const login = useCallback(async (email: string, password: string) => {
+    const { access_token, user_id } = await authApi.login(email, password);
 
-    const response =
-      await authApi.login(
-        email,
-        password
-      );
+    // Persiste no SecureStore
+    await SecureStore.setItemAsync(KEY_TOKEN, access_token);
+    await SecureStore.setItemAsync(KEY_USER_ID, user_id);
 
+    // Busca saldo imediatamente após o login
+    const { balance } = await authApi.getBalance(user_id, access_token);
 
-    await SecureStore.setItemAsync(
-      'teddycash_token',
-      response.access_token
-    );
+    if (mounted.current) {
+      setState({
+        token:      access_token,
+        userId:     user_id,
+        balance,
+        loading:    false,
+        refreshing: false,
+      });
+    }
+  }, []);
 
+  // ── logout ────────────────────────────────────────────────────────────────
+  const logout = useCallback(async () => {
+    await SecureStore.deleteItemAsync(KEY_TOKEN).catch(() => {});
+    await SecureStore.deleteItemAsync(KEY_USER_ID).catch(() => {});
+    if (mounted.current) {
+      setState({ token: null, userId: null, balance: null, loading: false, refreshing: false });
+    }
+  }, []);
 
-    await SecureStore.setItemAsync(
-      'teddycash_user',
-      response.user_id
-    );
+  // ── refreshBalance ────────────────────────────────────────────────────────
+  const refreshBalance = useCallback(async () => {
+    setState((s) => {
+      const { token, userId } = s;
+      if (!token || !userId) return s;
 
+      authApi.getBalance(userId, token)
+        .then(({ balance }) => {
+          if (mounted.current) setState((prev) => ({ ...prev, balance, refreshing: false }));
+        })
+        .catch(() => {
+          if (mounted.current) setState((prev) => ({ ...prev, refreshing: false }));
+        });
 
-    setToken(response.access_token);
+      return { ...s, refreshing: true };
+    });
+  }, []);
 
-    setUserId(response.user_id);
-
-  }
-
-
-
-  async function signOut(){
-
-    await SecureStore.deleteItemAsync(
-      'teddycash_token'
-    );
-
-
-    await SecureStore.deleteItemAsync(
-      'teddycash_user'
-    );
-
-
-    setToken(null);
-
-    setUserId(null);
-
-  }
-
-
-
-return (
-
-<AuthContext.Provider
-
-value={{
-token,
-userId,
-login,
-signOut,
-isLoading
-}}
-
->
-
-{children}
-
-</AuthContext.Provider>
-
-);
-
-
+  return (
+    <AuthContext.Provider value={{ ...state, login, logout, refreshBalance }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
+// ── Hook ──────────────────────────────────────────────────────────────────────
 
-
-export function useAuth(){
-
-return useContext(AuthContext);
-
+export function useAuth(): AuthContextValue {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth deve ser usado dentro de <AuthProvider>');
+  return ctx;
 }
