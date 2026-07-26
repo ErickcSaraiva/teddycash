@@ -9,17 +9,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/src/contexts/ThemeContext';
 import { getPalette } from '@/src/theme/palettes';
-
-// ─── Placeholders — substituir por useAuth() quando o backend estiver integrado
-const user = {
-  name: 'Erick',
-};
-
-const wallet = {
-  balance: 0,
-  coins: 0,
-};
-// ────────────────────────────────────────────────────────────────────────────
+import { useAuth } from '@/src/contexts/AuthContext';
 
 const FEATURED_REWARDS = [
   { emoji: '💳', label: 'Pix' },
@@ -34,7 +24,6 @@ function getGreeting(): string {
   return 'Boa noite';
 }
 
-// ─── Componente reutilizável ────────────────────────────────────────────────
 type ActionCardProps = {
   icon: string;
   title: string;
@@ -45,91 +34,93 @@ type ActionCardProps = {
 
 function ActionCard({ icon, title, onPress, cardColor, textColor }: ActionCardProps) {
   return (
-    <Pressable
-      style={[styles.actionCard, { backgroundColor: cardColor }]}
-      onPress={onPress}
-    >
+    <Pressable style={[styles.actionCard, { backgroundColor: cardColor }]} onPress={onPress}>
       <Text style={styles.actionEmoji}>{icon}</Text>
       <Text style={[styles.actionLabel, { color: textColor }]}>{title}</Text>
     </Pressable>
   );
 }
-// ────────────────────────────────────────────────────────────────────────────
 
 export default function HomeScreen() {
   const { theme } = useTheme();
   const palette = getPalette(theme);
   const router = useRouter();
+  const { token, userId, balance, refreshBalance, refreshing } = useAuth();
+
+  const displayName = userId ? 'Erick' : 'Usuário';
+  const coins = 0;
 
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: palette.background }]}
       contentContainerStyle={styles.content}
     >
-      {/* ── Header ── */}
       <View style={styles.header}>
         <Text style={[styles.appName, { color: palette.primary }]}>🧸 TeddyCash</Text>
         <Text style={[styles.greeting, { color: palette.text }]}>
-          {getGreeting()}, {user.name} 👋
+          {getGreeting()}, {displayName} 👋
         </Text>
+        {token ? (
+          <Pressable onPress={refreshBalance} style={styles.refreshBtn} disabled={refreshing}>
+            <Text style={[styles.refreshText, { color: palette.primary }]}>
+              {refreshing ? 'Atualizando...' : 'Atualizar saldo'}
+            </Text>
+          </Pressable>
+        ) : null}
       </View>
 
-      {/* ── Card de Saldo ── */}
       <View style={[styles.balanceCard, { backgroundColor: palette.card }]}>
         <Text style={[styles.balanceLabel, { color: palette.softText }]}>Saldo</Text>
         <Text style={[styles.balanceValue, { color: palette.primary }]}>
-          R$ {wallet.balance.toFixed(2)}
+          R$ {(balance ?? 0).toFixed(2)}
         </Text>
 
         <View style={[styles.divider, { backgroundColor: palette.softText + '33' }]} />
 
         <Text style={[styles.coinsValue, { color: palette.accent }]}>
-          🪙 {wallet.coins} moedas
+          🪙 {coins} moedas
         </Text>
 
         <Pressable
           style={[styles.earnButton, { backgroundColor: palette.primary }]}
-          onPress={() => router.push('/(tabs)/games')}
+          onPress={() => router.push('/home')}
         >
           <Text style={styles.earnButtonText}>+ Ganhar moedas</Text>
         </Pressable>
       </View>
 
-      {/* ── Acesso Rápido ── */}
       <Text style={[styles.sectionTitle, { color: palette.text }]}>⚡ Acesso rápido</Text>
 
       <ActionCard
         icon="🎮"
         title="Jogar"
-        onPress={() => router.push('/(tabs)/games')}
-        cardColor={palette.card}
-        textColor={palette.text}
-      />
-      <ActionCard
-        icon="🎁"
-        title="Prêmios"
-        onPress={() => router.push('/(tabs)/rewards')}
-        cardColor={palette.card}
-        textColor={palette.text}
-      />
-      <ActionCard
-        icon="📅"
-        title="Check-in"
-        onPress={() => router.push('/checkin')}
+        onPress={() => router.push('/home')}
         cardColor={palette.card}
         textColor={palette.text}
       />
 
-      {/* ── Prêmios em Destaque ── */}
+      <ActionCard
+        icon="🎁"
+        title="Prêmios"
+        onPress={() => router.push('/home')}
+        cardColor={palette.card}
+        textColor={palette.text}
+      />
+
+      <ActionCard
+        icon="📅"
+        title="Check-in"
+        onPress={() => router.push('/home')}
+        cardColor={palette.card}
+        textColor={palette.text}
+      />
+
       <Text style={[styles.sectionTitle, { color: palette.text }]}>🔥 Prêmios em destaque</Text>
 
       <View style={[styles.rewardsCard, { backgroundColor: palette.card }]}>
         {FEATURED_REWARDS.map((reward, index) => (
           <View key={reward.label}>
-            <Pressable
-              style={styles.rewardRow}
-              onPress={() => router.push('/(tabs)/rewards')}
-            >
+              <Pressable style={styles.rewardRow} onPress={() => router.push('/home')}>
               <Text style={styles.rewardEmoji}>{reward.emoji}</Text>
               <Text style={[styles.rewardLabel, { color: palette.text }]}>{reward.label}</Text>
               <Text style={[styles.rewardArrow, { color: palette.softText }]}>›</Text>
@@ -152,8 +143,6 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 40,
   },
-
-  // Header
   header: {
     marginTop: 60,
     marginBottom: 24,
@@ -168,8 +157,14 @@ const styles = StyleSheet.create({
     fontSize: 26,
     fontWeight: 'bold',
   },
-
-  // Saldo
+  refreshBtn: {
+    marginTop: 8,
+    alignSelf: 'flex-start',
+  },
+  refreshText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
   balanceCard: {
     padding: 24,
     borderRadius: 20,
@@ -208,15 +203,11 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 15,
   },
-
-  // Seção
   sectionTitle: {
     fontSize: 17,
     fontWeight: '700',
     marginBottom: 12,
   },
-
-  // Action Cards
   actionCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -236,8 +227,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-
-  // Prêmios em destaque
   rewardsCard: {
     borderRadius: 20,
     overflow: 'hidden',

@@ -9,12 +9,12 @@ import { ThemeProvider as LiveOpsThemeProvider } from '@/src/contexts/ThemeConte
 import { AuthProvider, useAuth } from '@/src/contexts/AuthContext';
 
 function AppNavigator() {
-  const { token, isLoading } = useAuth();
-
+  const { token, loading } = useAuth();
   const segments = useSegments();
-  const router = useRouter()
+  const router = useRouter();
+
   useEffect(() => {
-    if (isLoading) return;
+    if (loading) return;
 
     const inTabs = segments[0] === '(tabs)';
 
@@ -24,11 +24,11 @@ function AppNavigator() {
     }
 
     if (token && !inTabs) {
-      router.replace('/');
+      router.replace('/home');
     }
-  }, [token, isLoading, segments]);
+  }, [token, loading, segments, router]);
 
-  if (isLoading) {
+  if (loading) {
     return null;
   }
 
@@ -41,9 +41,7 @@ export default function RootLayout() {
   return (
     <LiveOpsThemeProvider>
       <AuthProvider>
-        <NavigationThemeProvider
-          value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}
-        >
+        <NavigationThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
           <AppNavigator />
           <StatusBar style="auto" />
         </NavigationThemeProvider>
