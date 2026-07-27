@@ -15,7 +15,8 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/src/contexts/AuthContext';
-
+import ApiService from '@/src/services/api'; 
+const api = new ApiService();
 const { height } = Dimensions.get('window');
 
 const C = {
@@ -466,14 +467,33 @@ export default function LoginScreen() {
     setLoading(true);
     clearError();
     try {
-      await login(email.trim().toLowerCase(), password);
+      const cleanEmail = email.trim().toLowerCase();
+
+      if (isSignUp) {
+        // Como a UI não pede um "username", geramos um a partir do e-mail (ex: erick@... -> erick)
+        const generatedUsername = cleanEmail.split('@')[0];
+        
+        // 1. Regista o utilizador na base de dados
+        await api.register(generatedUsername, cleanEmail, password);
+        
+        // 2. Faz login automaticamente a seguir para entrar no app
+        await api.login(cleanEmail, password);
+      } else {
+        // Apenas faz o login normal
+        await api.login(cleanEmail, password);
+      }
+
+      // IMPORTANTE: Se o teu `useAuth` tem lógica de guardar o token global, 
+      // deves chamar a função login() dele aqui também. Se não, apenas prosseguimos:
       onLoginSuccess();
+      
     } catch (e: any) {
-      setError(e?.message ?? 'E-mail ou senha incorretos.');
+      // O erro que vem do backend (ex: "Email já em uso" ou "Senha incorreta") aparece aqui
+      setError(e?.message ?? 'Ocorreu um erro. Tente novamente.');
     } finally {
       setLoading(false);
     }
-  }, [email, password, login, onLoginSuccess, clearError]);
+  }, [email, password, isSignUp, clearError, onLoginSuccess]);
 
   const handleSendOtp = useCallback(async () => {
     const digits = phone.replace(/\D/g, '');

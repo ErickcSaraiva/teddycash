@@ -27,4 +27,31 @@ export default class ApiService {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return res.json();
   }
+
+  async login(email: string, password: string) {
+    const res = await fetch(`${this.baseUrl}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await res.json();
+    
+    // Se o backend enviar um erro (ex: senha incorreta), lançamos esse erro
+    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    
+    return data;
+  }
+
+  async register(username: string, email: string, password: string) {
+    const res = await fetch(`${this.baseUrl}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, email, password }),
+    });
+    const data = await res.json();
+    
+    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    
+    return data;
+  }
 }
