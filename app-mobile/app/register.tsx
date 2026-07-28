@@ -3,19 +3,19 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityInd
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/src/contexts/ThemeContext';
 import { getPalette } from '@/src/theme/palettes';
+// Agora vamos usar a API centralizada que criamos na Etapa 3
+import { authApi } from '../src/services/authApi';
 
 export default function RegisterScreen() {
   const router = useRouter();
   const { theme } = useTheme();
   const palette = getPalette(theme);
 
-  // 1. Estados para guardar o que é digitado
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // 2. Função que liga ao Backend
   const handleRegister = async () => {
     // Validação básica
     if (!username || !email || !password) {
@@ -26,30 +26,19 @@ export default function RegisterScreen() {
     setIsLoading(true);
 
     try {
-      // ⚠️ ATENÇÃO AO IP: 
-      // Se usares emulador Android, tenta 'http://10.0.2.2:3000/auth/register'
-      // Se usares o telemóvel físico, coloca o IP do teu computador (ex: 'http://192.168.1.15:3000/auth/register')
-      const response = await fetch('http://192.168.101.13:8000/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username,
-          email,
-          password,
-        }),
-      });
+      // 1. Cria a conta na API
+      await authApi.register(username, email, password);
 
-      const data = await response.json();
+      // 2. Faz o login automático logo em seguida para pegar o Token
+      const loginData = await authApi.login(email, password);
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Erro ao criar a conta.');
-      }
+      // 3. Testa se o token chegou mesmo (olha o terminal do Expo!)
+      console.log("Token recebido com sucesso:", loginData.access_token);
 
-      // Deu tudo certo!
-      Alert.alert('Sucesso!', 'A tua conta foi criada.');
-      router.replace({ pathname: '/(tabs)' as any }); // Vai para a Home
+      Alert.alert('Sucesso!', 'A tua conta foi criada e você já está logado.');
+      
+      // 4. Redireciona para a Home
+      router.replace('/(tabs)');
 
     } catch (error: any) {
       Alert.alert('Erro', error.message);
@@ -68,7 +57,7 @@ export default function RegisterScreen() {
         placeholder="Nome de utilizador"
         placeholderTextColor={palette.softText}
         value={username}
-        onChangeText={setUsername} // Salva o nome
+        onChangeText={setUsername}
         autoCapitalize="none"
       />
       <TextInput 
@@ -76,7 +65,7 @@ export default function RegisterScreen() {
         placeholder="E-mail"
         placeholderTextColor={palette.softText}
         value={email}
-        onChangeText={setEmail} // Salva o email
+        onChangeText={setEmail}
         keyboardType="email-address"
         autoCapitalize="none"
       />
@@ -86,7 +75,7 @@ export default function RegisterScreen() {
         secureTextEntry
         placeholderTextColor={palette.softText}
         value={password}
-        onChangeText={setPassword} // Salva a senha
+        onChangeText={setPassword}
       />
 
       <TouchableOpacity 
