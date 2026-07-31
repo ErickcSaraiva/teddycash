@@ -3,13 +3,14 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityInd
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/src/contexts/ThemeContext';
 import { getPalette } from '@/src/theme/palettes';
-// Agora vamos usar a API centralizada que criamos na Etapa 3
-import { authApi } from '../src/services/authApi';
+import { useAuth } from '@/src/hooks/useAuth';
+import { authService } from '@/src/services/auth';
 
 export default function RegisterScreen() {
   const router = useRouter();
   const { theme } = useTheme();
   const palette = getPalette(theme);
+  const { signIn } = useAuth();
 
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -26,19 +27,11 @@ export default function RegisterScreen() {
     setIsLoading(true);
 
     try {
-      // 1. Cria a conta na API
-      await authApi.register(username, email, password);
-
-      // 2. Faz o login automático logo em seguida para pegar o Token
-      const loginData = await authApi.login(email, password);
-
-      // 3. Testa se o token chegou mesmo (olha o terminal do Expo!)
-      console.log("Token recebido com sucesso:", loginData.access_token);
+      await authService.register(username, email, password);
+      await signIn(email, password);
 
       Alert.alert('Sucesso!', 'A tua conta foi criada e você já está logado.');
-      
-      // 4. Redireciona para a Home
-      router.replace('/(tabs)');
+      router.replace('/home');
 
     } catch (error: any) {
       Alert.alert('Erro', error.message);

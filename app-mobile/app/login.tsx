@@ -14,9 +14,8 @@ import {
   View,
 } from 'react-native';
 import { router } from 'expo-router';
-import { useAuth } from '@/src/contexts/AuthContext';
-import ApiService from '@/src/services/api'; 
-const api = new ApiService();
+import { useAuth } from '@/src/hooks/useAuth';
+import { authService } from '@/src/services/auth';
 const { height } = Dimensions.get('window');
 
 const C = {
@@ -393,7 +392,7 @@ const PhoneView = ({
 );
 
 export default function LoginScreen() {
-  const { login } = useAuth();
+  const { signIn } = useAuth();
 
   const [currentView, setCurrentView] = useState<ViewName>('landing');
   const [email, setEmail] = useState('');
@@ -419,7 +418,7 @@ export default function LoginScreen() {
   const clearError = useCallback(() => setError(''), []);
 
   const onLoginSuccess = useCallback(() => {
-    router.replace('/(tabs)' as any);
+    router.replace('/home');
   }, []);
 
   const handleGoogleLogin = useCallback(async () => {
@@ -470,21 +469,11 @@ export default function LoginScreen() {
       const cleanEmail = email.trim().toLowerCase();
 
       if (isSignUp) {
-        // Como a UI não pede um "username", geramos um a partir do e-mail (ex: erick@... -> erick)
         const generatedUsername = cleanEmail.split('@')[0];
-        
-        // 1. Regista o utilizador na base de dados
-        await api.register(generatedUsername, cleanEmail, password);
-        
-        // 2. Faz login automaticamente a seguir para entrar no app
-        await api.login(cleanEmail, password);
-      } else {
-        // Apenas faz o login normal
-        await api.login(cleanEmail, password);
+        await authService.register(generatedUsername, cleanEmail, password);
       }
 
-      // IMPORTANTE: Se o teu `useAuth` tem lógica de guardar o token global, 
-      // deves chamar a função login() dele aqui também. Se não, apenas prosseguimos:
+      await signIn(cleanEmail, password);
       onLoginSuccess();
       
     } catch (e: any) {

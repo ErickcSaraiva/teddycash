@@ -11,6 +11,7 @@ async function main() {
     create: {
       username: 'erick_crane_master',
       email: 'erick@catchup.com',
+      password: 'demo-password',
       balance: 150,
     },
   });

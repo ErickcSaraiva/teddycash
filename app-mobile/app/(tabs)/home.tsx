@@ -9,7 +9,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/src/contexts/ThemeContext';
 import { getPalette } from '@/src/theme/palettes';
-import { useAuth } from '@/src/contexts/AuthContext';
+import { useAuth } from '@/src/hooks/useAuth';
 
 const FEATURED_REWARDS = [
   { emoji: '💳', label: 'Pix' },
@@ -45,10 +45,11 @@ export default function HomeScreen() {
   const { theme } = useTheme();
   const palette = getPalette(theme);
   const router = useRouter();
-  const { token, userId, balance, refreshBalance, refreshing } = useAuth();
+  const { token, userId, username, balance, refreshBalance, refreshing } = useAuth();
 
-  const displayName = userId ? 'Erick' : 'Usuário';
-  const coins = 0;
+  const displayName = username ?? (userId ? 'Usuário' : 'Usuário');
+  const credits = balance ?? 0;
+  const balanceLabel = `R$ ${(credits ?? 0).toFixed(2)}`;
 
   return (
     <ScrollView
@@ -72,14 +73,13 @@ export default function HomeScreen() {
       <View style={[styles.balanceCard, { backgroundColor: palette.card }]}>
         <Text style={[styles.balanceLabel, { color: palette.softText }]}>Saldo</Text>
         <Text style={[styles.balanceValue, { color: palette.primary }]}>
-          R$ {(balance ?? 0).toFixed(2)}
+          {balanceLabel}
         </Text>
 
         <View style={[styles.divider, { backgroundColor: palette.softText + '33' }]} />
 
-        <Text style={[styles.coinsValue, { color: palette.accent }]}>
-          🪙 {coins} moedas
-        </Text>
+        <Text style={[styles.coinsValue, { color: palette.accent }]}> 
+          💳 {credits} créditos
 
         <Pressable
           style={[styles.earnButton, { backgroundColor: palette.primary }]}

@@ -15,7 +15,7 @@ import {
   Dimensions,
   SafeAreaView,
 } from 'react-native';
-import { useAuth } from '../contexts/AuthContext.tsx'
+import { useAuth } from '../hooks/useAuth'
 
 const { height } = Dimensions.get('window');
 
@@ -394,7 +394,7 @@ const PhoneView = ({
 export default function LoginScreen({ onLoginSuccess }: { onLoginSuccess?: () => void }) {
   // ── AuthContext ─────────────────────────────────────────────────────────
   // login() chama POST /auth/login + GET /balance e salva no SecureStore
-  const { login } = useAuth();
+  const { signIn } = useAuth();
 
   // ── Estado local ────────────────────────────────────────────────────────
   const [currentView, setCurrentView] = useState<ViewName>('landing');
@@ -433,7 +433,7 @@ export default function LoginScreen({ onLoginSuccess }: { onLoginSuccess?: () =>
     clearError();
     try {
       // TODO: await GoogleSignIn.signIn() → pegar idToken → enviar ao backend
-      await login('google@teddycash.com', 'google-demo');
+      await signIn('google@teddycash.com', 'google-demo');
       onLoginSuccess?.();
     } catch (e: any) {
       setError(e?.message ?? 'Falha no login com Google. Tente novamente.');
@@ -451,7 +451,7 @@ export default function LoginScreen({ onLoginSuccess }: { onLoginSuccess?: () =>
     clearError();
     try {
       // TODO: await AppleAuthentication.signInAsync() → enviar ao backend
-      await login('apple@teddycash.com', 'apple-demo');
+      await signIn('apple@teddycash.com', 'apple-demo');
       onLoginSuccess?.();
     } catch (e: any) {
       setError(e?.message ?? 'Falha no login com Apple. Tente novamente.');
@@ -480,7 +480,7 @@ export default function LoginScreen({ onLoginSuccess }: { onLoginSuccess?: () =>
     setLoading(true);
     clearError();
     try {
-      await login(email.trim().toLowerCase(), password);
+      await signIn(email.trim().toLowerCase(), password);
       onLoginSuccess?.();
     } catch (e: any) {
       setError(e?.message ?? 'E-mail ou senha incorretos.');

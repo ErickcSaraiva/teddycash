@@ -1,11 +1,11 @@
 import { Router } from 'express';
-import { getBalance, getTransactions, login, transfer } from '../controllers/accountController';
+import { getBalance, getTransactions, transfer } from '../controllers/accountController';
+import { verifyToken } from '../middlewares/authMiddleware';
 
 const router = Router();
 
-router.post('/auth/login', login);
-router.get('/balance/:userId', getBalance);
-router.post('/transfer', transfer);
-router.get('/transactions/:userId', getTransactions);
+router.get('/balance/:userId', verifyToken, getBalance);
+router.post('/transfer', verifyToken, transfer);
+router.get('/transactions/:userId', verifyToken, getTransactions);
 
 export default router;

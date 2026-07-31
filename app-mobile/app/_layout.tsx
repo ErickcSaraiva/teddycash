@@ -1,12 +1,12 @@
+// app-mobile/app/_layout.tsx
 import { useEffect } from 'react';
 import { DarkTheme, DefaultTheme, ThemeProvider as NavigationThemeProvider } from '@react-navigation/native';
 import { Slot, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
-
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { ThemeProvider as LiveOpsThemeProvider } from '@/src/contexts/ThemeContext';
-import { AuthProvider, useAuth } from '@/src/contexts/AuthContext';
+import { AuthProvider, useAuth } from '@/src/context/AuthContext';
 
 function AppNavigator() {
   const { token, loading } = useAuth();
@@ -16,15 +16,21 @@ function AppNavigator() {
   useEffect(() => {
     if (loading) return;
 
-    const inTabs = segments[0] === '(tabs)';
+    const isAuthRoute = segments[0] === 'login' || segments[0] === 'register';
+    const isTabsRoute = segments[0] === '(tabs)';
 
-    if (!token && inTabs) {
+    if (!token && isTabsRoute) {
       router.replace('/login');
       return;
     }
 
-    if (token && !inTabs) {
+    if (token && isAuthRoute) {
       router.replace('/home');
+      return;
+    }
+
+    if (!token && segments[0] === undefined) {
+      router.replace('/login');
     }
   }, [token, loading, segments, router]);
 
@@ -48,4 +54,4 @@ export default function RootLayout() {
       </AuthProvider>
     </LiveOpsThemeProvider>
   );
-}
+} 

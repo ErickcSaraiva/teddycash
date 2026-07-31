@@ -1,32 +1,40 @@
-import type { Request, Response } from 'express';
+// backend-ts/src/controllers/creditController.ts
+import type { Response } from 'express';
 import { prisma } from '../config/prisma';
+import { AuthRequest } from '../middlewares/authMiddleware'; // Importamos o nosso segurança
 
-export const processCreditPurchase = async (req: Request, res: Response) => {
-  const { userId, amount } = req.body;
+export const processCreditPurchase = async (req: AuthRequest, res: Response) => {
+  // 1. Pegamos o userId de forma 100% segura pelo Token (req.userId)
+  const userId = req.userId;
+  
+  // 2. Do body, pegamos APENAS o valor que ele quer adicionar
+  const { amount } = req.body;
   const cashbackRate = 0.10; // 10%
 
-  if (!userId || typeof amount !== 'number' || amount <= 0) {
+  if (!userId) {
+    return res.status(401).json({ success: false, message: 'Usuário não autenticado.' });
+  }
+
+  if (typeof amount !== 'number' || amount <= 0) {
     return res.status(400).json({
       success: false,
-      message: 'userId and a positive numeric amount are required.'
+      message: 'É necessário informar um valor (amount) numérico e positivo.'
     });
   }
 
   try {
-    // A chave aqui é que o TypeScript vai inferir o tipo de 'tx' automaticamente
-    // ao utilizarmos o prisma.$transaction e retornarmos os dados.
     const updatedUser = await prisma.$transaction(async (tx) => {
       
-      // 1. Atualiza o saldo e cashback
+      // Atualiza o saldo e cashback
       const user = await tx.user.update({
         where: { id: userId },
         data: {
           balance: { increment: amount },
-          cashback: { increment: amount * cashbackRate }
+          cashback: { increment: amount * cashbackRate } // O seu schema precisará ter o campo 'cashback'
         }
       });
 
-      // 2. Regista a transação
+      // Regista a transação
       await tx.transaction.create({
         data: {
           userId,
@@ -48,7 +56,7 @@ export const processCreditPurchase = async (req: Request, res: Response) => {
     console.error("Erro na transação:", error);
     return res.status(500).json({ 
       success: false, 
-      message: 'Erro na transação financeira. Verifique o ID do utilizador.' 
+      message: 'Erro na transação financeira.' 
     });
   }
 };

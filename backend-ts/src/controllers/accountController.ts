@@ -13,6 +13,7 @@ async function ensureDemoUser() {
     update: {},
     create: {
       ...DEMO_USER,
+      password: 'demo-password',
       balance: 1250,
       cashback: 0,
     },

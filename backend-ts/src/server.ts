@@ -2,9 +2,9 @@ import 'dotenv/config';
 import cors from 'cors';
 import express from 'express';
 import accountRoutes from './routes/account';
+import authRoutes from './routes/auth';
 import creditRoutes from './routes/credit';
 import gameRoutes from './routes/game';
-import { register, login } from './controllers/authController';
 
 const app = express();
 const port = Number(process.env.PORT ?? 8000);
@@ -17,10 +17,9 @@ app.get('/health', (_req, res) => {
 });
 
 app.use(accountRoutes);
+app.use(authRoutes);
 app.use(creditRoutes);
 app.use('/games', gameRoutes);
-app.post('/auth/register', register);
-app.post('/auth/login', login);
 app.use((_req, res) => {
   return res.status(404).json({ error: 'Route not found.' });
 });

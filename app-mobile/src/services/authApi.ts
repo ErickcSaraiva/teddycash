@@ -1,13 +1,25 @@
 // app-mobile/src/services/authApi.ts
+import * as SecureStore from 'expo-secure-store';
 
 const API_BASE =
   process.env.EXPO_PUBLIC_API_BASE ?? 'http://192.168.101.13:8000';
+const KEY_TOKEN = 'teddycash_token';
+const KEY_USER_ID = 'teddycash_user_id';
 
 // ── Tipos de resposta ─────────────────────────────────────────────────────────
 
 export interface LoginResponse {
-  access_token: string;
-  user_id: string;
+  token?: string;
+  userId?: string;
+  access_token?: string;
+  user_id?: string;
+  username?: string;
+}
+
+export interface RegisterResponse {
+  success: boolean;
+  message: string;
+  userId: string;
 }
 
 export interface BalanceResponse {
@@ -29,7 +41,7 @@ async function post<T>(path: string, body?: object, token?: string): Promise<T> 
 
   if (!res.ok) {
     const detail = await res.json().catch(() => ({}));
-    throw new Error(detail?.detail ?? `HTTP ${res.status}`);
+    throw new Error(detail?.detail || detail?.error || `HTTP ${res.status}`);
   }
   return res.json();
 }
@@ -42,7 +54,7 @@ async function get<T>(path: string, token?: string): Promise<T> {
 
   if (!res.ok) {
     const detail = await res.json().catch(() => ({}));
-    throw new Error(detail?.detail ?? `HTTP ${res.status}`);
+    throw new Error(detail?.detail || detail?.error || `HTTP ${res.status}`);
   }
   return res.json();
 }
@@ -51,12 +63,45 @@ async function get<T>(path: string, token?: string): Promise<T> {
 
 export const authApi = {
   /**
-   * POST /auth/login
-   * O backend atual ignora email/senha e retorna sempre { access_token, user_id: "user1" }.
-   * Quando a autenticação real for implementada, só este arquivo muda.
+   * POST /auth/register
    */
-  login: (email: string, password: string): Promise<LoginResponse> =>
-    post<LoginResponse>('/auth/login', { email, password }),
+  register: (username: string, email: string, password: string): Promise<RegisterResponse> =>
+    post<RegisterResponse>('/auth/register', { username, email, password }),
+
+  /**
+   * POST /auth/login
+   * Salva automaticamente o token e o userId no SecureStore.
+   */
+  login: async (email: string, password: string): Promise<LoginResponse> => {
+    const data = await post<LoginResponse>('/auth/login', { email, password });
+
+    const token = data.token ?? data.access_token;
+    const userId = data.userId ?? data.user_id;
+
+    if (!token || !userId) {
+      throw new Error('Resposta inválida do backend no login.');
+    }
+
+    await SecureStore.setItemAsync(KEY_TOKEN, token);
+    await SecureStore.setItemAsync(KEY_USER_ID, userId);
+
+    return { ...data, token, userId };
+  },
+
+  /**
+   * GET token salvo localmente
+   */
+  getToken: async (): Promise<string | null> => {
+    return await SecureStore.getItemAsync(KEY_TOKEN);
+  },
+
+  /**
+   * Remove o token para deslogar
+   */
+  logout: async (): Promise<void> => {
+    await SecureStore.deleteItemAsync(KEY_TOKEN);
+    await SecureStore.deleteItemAsync(KEY_USER_ID);
+  },
 
   /**
    * GET /balance/:userId

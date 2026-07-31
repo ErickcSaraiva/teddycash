@@ -21,6 +21,7 @@ const KEY_USER_ID = 'teddycash_user_id';
 interface AuthState {
   token:      string | null;
   userId:     string | null;
+  username:   string | null;
   balance:    number | null;
   /** true durante o boot (verificando sessão salva no SecureStore) */
   loading:    boolean;
@@ -44,6 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AuthState>({
     token:      null,
     userId:     null,
+    username:   null,
     balance:    null,
     loading:    true,   // começa true; vira false depois do boot
     refreshing: false,
@@ -68,7 +70,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // Sessão encontrada — busca saldo imediatamente
           const { balance } = await authApi.getBalance(userId, token);
           if (mounted.current) {
-            setState({ token, userId, balance, loading: false, refreshing: false });
+            setState({ token, userId, username: null, balance, loading: false, refreshing: false });
           }
         } else {
           if (mounted.current) setState((s) => ({ ...s, loading: false }));
@@ -84,21 +86,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // ── login ─────────────────────────────────────────────────────────────────
   const login = useCallback(async (email: string, password: string) => {
-    const { access_token, user_id } = await authApi.login(email, password);
+    const { token, userId } = await authApi.login(email, password);
 
-    // Persiste no SecureStore
-    await SecureStore.setItemAsync(KEY_TOKEN, access_token);
-    await SecureStore.setItemAsync(KEY_USER_ID, user_id);
+    if (!token || !userId) {
+      throw new Error('Falha ao salvar sessão do usuário.');
+    }
 
-    // Busca saldo imediatamente após o login
-    const { balance } = await authApi.getBalance(user_id, access_token);
+    let balance: number | null = null;
+    try {
+      const response = await authApi.getBalance(userId, token);
+      balance = response.balance;
+    } catch {
+      balance = null;
+    }
 
     if (mounted.current) {
       setState({
-        token:      access_token,
-        userId:     user_id,
+        token,
+        userId,
+        username: email.split('@')[0] || null,
         balance,
-        loading:    false,
+        loading: false,
         refreshing: false,
       });
     }
@@ -109,7 +117,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await SecureStore.deleteItemAsync(KEY_TOKEN).catch(() => {});
     await SecureStore.deleteItemAsync(KEY_USER_ID).catch(() => {});
     if (mounted.current) {
-      setState({ token: null, userId: null, balance: null, loading: false, refreshing: false });
+      setState({ token: null, userId: null, username: null, balance: null, loading: false, refreshing: false });
     }
   }, []);
 

@@ -1,57 +1,27 @@
-export default class ApiService {
-  baseUrl: string;
+import axios from 'axios';
+import * as SecureStore from 'expo-secure-store';
 
-  constructor(baseUrl?: string) {
-    this.baseUrl = baseUrl ?? process.env.API_BASE ?? 'http://192.168.101.13:8000';
+const API_BASE = process.env.EXPO_PUBLIC_API_BASE ?? 'http://192.168.101.13:8000';
+const TOKEN_KEY = 'teddycash_token';
+
+const api = axios.create({
+  baseURL: API_BASE,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+api.interceptors.request.use(async (config) => {
+  const token = await SecureStore.getItemAsync(TOKEN_KEY);
+
+  if (token) {
+    config.headers = {
+      ...config.headers,
+      Authorization: `Bearer ${token}`,
+    };
   }
 
-  async getBalance(userId: string): Promise<number> {
-    const res = await fetch(`${this.baseUrl}/balance/${userId}`);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const json = await res.json();
-    return json.balance as number;
-  }
+  return config;
+});
 
-  async transfer(userId: string, amount: number, machineId: string) {
-    const res = await fetch(`${this.baseUrl}/transfer`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: userId, amount, machine_id: machineId }),
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return res.json();
-  }
-
-  async getTransactions(userId: string) {
-    const res = await fetch(`${this.baseUrl}/transactions/${userId}`);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return res.json();
-  }
-
-  async login(email: string, password: string) {
-    const res = await fetch(`${this.baseUrl}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    });
-    const data = await res.json();
-    
-    // Se o backend enviar um erro (ex: senha incorreta), lançamos esse erro
-    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
-    
-    return data;
-  }
-
-  async register(username: string, email: string, password: string) {
-    const res = await fetch(`${this.baseUrl}/auth/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, email, password }),
-    });
-    const data = await res.json();
-    
-    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
-    
-    return data;
-  }
-}
+export default api;
