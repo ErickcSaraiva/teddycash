@@ -48,4 +48,5 @@ Optámos por uma stack unificada em **TypeScript** para garantir maior produtivi
 
 ---
 
-*Desenvolvido por **[Erick Saraiva](https://github.com/ErickcSaraiva)** | Full Stack Developer*
+*Desenvolvido por **[Erick Saraiva](https://github.com/ErickcSaraiva)**
+| Full Stack Developer*  © Todos os direitos reservados.
