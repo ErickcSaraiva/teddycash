@@ -15,6 +15,7 @@ model User {
   username  String   @unique
   email     String   @unique
   password  String
+  avatarUrl String?
   balance   Float    @default(0.0)
   cashback  Float    @default(0.0)
   createdAt DateTime @default(now())

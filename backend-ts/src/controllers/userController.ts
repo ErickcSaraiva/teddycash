@@ -1,17 +1,18 @@
-import type { Request, Response } from 'express';
+import type { Response } from 'express';
 import { prisma } from '../config/prisma';
+import type { AuthRequest } from '../middlewares/authMiddleware';
 
 // Definimos uma taxa de Cashback de 10% (0.10)
 const CASHBACK_RATE = 0.10;
 
-export const addCredit = async (req: Request, res: Response) => {
+export const addCredit = async (req: AuthRequest, res: Response) => {
   try {
-    const { userId, amount } = req.body;
+    const userId = req.userId;
+    const { amount } = req.body;
 
-    // 1. Validação rigorosa dos dados de entrada
     if (!userId || typeof amount !== 'number' || amount <= 0) {
-      return res.status(400).json({ 
-        error: "Payload inválido. Envia um 'userId' válido e um 'amount' numérico positivo." 
+      return res.status(400).json({
+        error: "Payload inválido. Envia um 'amount' numérico positivo." 
       });
     }
 

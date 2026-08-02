@@ -22,6 +22,8 @@ interface AuthState {
   token:      string | null;
   userId:     string | null;
   username:   string | null;
+  email:      string | null;
+  avatarUrl:  string | null;
   balance:    number | null;
   /** true durante o boot (verificando sessão salva no SecureStore) */
   loading:    boolean;
@@ -33,6 +35,7 @@ interface AuthContextValue extends AuthState {
   login:          (email: string, password: string) => Promise<void>;
   logout:         () => Promise<void>;
   refreshBalance: () => Promise<void>;
+  updateProfile:  (data: { username?: string; email?: string; avatarUrl?: string | null }) => Promise<void>;
 }
 
 // ── Context ───────────────────────────────────────────────────────────────────
@@ -46,6 +49,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     token:      null,
     userId:     null,
     username:   null,
+    email:      null,
+    avatarUrl:  null,
     balance:    null,
     loading:    true,   // começa true; vira false depois do boot
     refreshing: false,
@@ -67,10 +72,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         ]);
 
         if (token && userId) {
-          // Sessão encontrada — busca saldo imediatamente
-          const { balance } = await authApi.getBalance(userId, token);
+          // Sessão encontrada — busca perfil e saldo imediatamente
+          const [profile, balanceResponse] = await Promise.all([
+            authApi.getProfile(userId, token),
+            authApi.getBalance(userId, token),
+          ]);
+
           if (mounted.current) {
-            setState({ token, userId, username: null, balance, loading: false, refreshing: false });
+            setState({
+              token,
+              userId,
+              username: profile.username,
+              email: profile.email,
+              avatarUrl: profile.avatarUrl ?? null,
+              balance: balanceResponse.balance,
+              loading: false,
+              refreshing: false,
+            });
           }
         } else {
           if (mounted.current) setState((s) => ({ ...s, loading: false }));
@@ -86,16 +104,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // ── login ─────────────────────────────────────────────────────────────────
   const login = useCallback(async (email: string, password: string) => {
-    const { token, userId } = await authApi.login(email, password);
+    const { token, userId, username } = await authApi.login(email, password);
 
     if (!token || !userId) {
       throw new Error('Falha ao salvar sessão do usuário.');
     }
 
     let balance: number | null = null;
+    let userEmail: string | null = null;
+    let profileUsername: string | null = username ?? null;
+
     try {
-      const response = await authApi.getBalance(userId, token);
-      balance = response.balance;
+      const [profile, balanceResponse] = await Promise.all([
+        authApi.getProfile(userId, token),
+        authApi.getBalance(userId, token),
+      ]);
+      balance = balanceResponse.balance;
+      userEmail = profile.email;
+      profileUsername = profile.username;
     } catch {
       balance = null;
     }
@@ -104,7 +130,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setState({
         token,
         userId,
-        username: email.split('@')[0] || null,
+        username: profileUsername,
+        email: userEmail,
+        avatarUrl: null,
         balance,
         loading: false,
         refreshing: false,
@@ -112,35 +140,66 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const updateProfile = useCallback(async (data: { username?: string; email?: string; avatarUrl?: string | null }) => {
+    const { token, userId } = state;
+    if (!token || !userId) {
+      throw new Error('Usuário não autenticado.');
+    }
+
+    const profile = await authApi.updateProfile(userId, data, token);
+    if (mounted.current) {
+      setState((prev) => ({
+        ...prev,
+        username: profile.username,
+        email: profile.email,
+        avatarUrl: profile.avatarUrl ?? null,
+      }));
+    }
+  }, [state.token, state.userId]);
+
   // ── logout ────────────────────────────────────────────────────────────────
   const logout = useCallback(async () => {
     await SecureStore.deleteItemAsync(KEY_TOKEN).catch(() => {});
     await SecureStore.deleteItemAsync(KEY_USER_ID).catch(() => {});
     if (mounted.current) {
-      setState({ token: null, userId: null, username: null, balance: null, loading: false, refreshing: false });
+      setState({
+        token: null,
+        userId: null,
+        username: null,
+        email: null,
+        avatarUrl: null,
+        balance: null,
+        loading: false,
+        refreshing: false,
+      });
     }
   }, []);
 
   // ── refreshBalance ────────────────────────────────────────────────────────
-  const refreshBalance = useCallback(async () => {
-    setState((s) => {
-      const { token, userId } = s;
-      if (!token || !userId) return s;
+ const refreshBalance = useCallback(async () => {
+  const { token, userId } = state;
 
-      authApi.getBalance(userId, token)
-        .then(({ balance }) => {
-          if (mounted.current) setState((prev) => ({ ...prev, balance, refreshing: false }));
-        })
-        .catch(() => {
-          if (mounted.current) setState((prev) => ({ ...prev, refreshing: false }));
-        });
+  if (!token || !userId) return;
 
-      return { ...s, refreshing: true };
-    });
-  }, []);
+  if (mounted.current) {
+    setState((prev) => ({ ...prev, refreshing: true }));
+  }
+
+  try {
+    const { balance } = await authApi.getBalance(userId, token);
+
+    if (mounted.current) {
+      setState((prev) => ({ ...prev, balance }));
+    }
+  } finally {
+    if (mounted.current) {
+      setState((prev) => ({ ...prev, refreshing: false }));
+    }
+  }
+}, [state.token, state.userId]);
 
   return (
-    <AuthContext.Provider value={{ ...state, login, logout, refreshBalance }}>
+    <AuthContext.Provider value={{ ...state, login, logout, refreshBalance, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );

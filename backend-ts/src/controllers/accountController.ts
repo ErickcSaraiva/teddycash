@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import { prisma } from '../config/prisma';
 import { randomBytes } from 'crypto';
+import type { AuthRequest } from '../middlewares/authMiddleware';
 
 const DEMO_USER = {
   id: 'user1',
@@ -25,20 +26,15 @@ function getParamValue(value: string | string[] | undefined): string | undefined
   return Array.isArray(value) ? value[0] : value;
 }
 
-export const login = async (_req: Request, res: Response) => {
-  const user = await ensureDemoUser();
-
-  return res.json({
-    access_token: 'mock-token',
-    user_id: user.id,
-  });
-};
-
-export const getBalance = async (req: Request, res: Response) => {
+export const getBalance = async (req: AuthRequest, res: Response) => {
   const userId = getParamValue(req.params.userId);
 
   if (!userId) {
     return res.status(400).json({ error: 'userId is required.' });
+  }
+
+  if (!req.userId || req.userId !== userId) {
+    return res.status(403).json({ error: 'Access denied. You can only view your own balance.' });
   }
 
   const user = userId === DEMO_USER.id ? await ensureDemoUser() : await prisma.user.findUnique({ where: { id: userId } });
@@ -54,13 +50,13 @@ export const getBalance = async (req: Request, res: Response) => {
   });
 };
 
-export const transfer = async (req: Request, res: Response) => {
-  const userId = req.body.user_id ?? req.body.userId;
+export const transfer = async (req: AuthRequest, res: Response) => {
+  const userId = req.userId;
   const machineId = req.body.machine_id ?? req.body.machineId;
   const amount = Number(req.body.amount);
 
   if (!userId || !machineId || !Number.isFinite(amount) || amount <= 0) {
-    return res.status(400).json({ error: 'user_id, machine_id and a positive amount are required.' });
+    return res.status(400).json({ error: 'machine_id and a positive amount are required.' });
   }
 
   try {
@@ -118,11 +114,15 @@ export const transfer = async (req: Request, res: Response) => {
   }
 };
 
-export const getTransactions = async (req: Request, res: Response) => {
+export const getTransactions = async (req: AuthRequest, res: Response) => {
   const userId = getParamValue(req.params.userId);
 
   if (!userId) {
     return res.status(400).json({ error: 'userId is required.' });
+  }
+
+  if (!req.userId || req.userId !== userId) {
+    return res.status(403).json({ error: 'Access denied. You can only view your own transactions.' });
   }
 
   const transactions = await prisma.transaction.findMany({
@@ -145,8 +145,8 @@ const AUTHORIZATION_TTL_MS = 2 * 60 * 1000;
 
 class InsufficientBalanceError extends Error {}
 
-export const createMachineAuthorization = async (req: Request, res: Response) => {
-  const userId = req.body.user_id ?? req.body.userId;
+export const createMachineAuthorization = async (req: AuthRequest, res: Response) => {
+  const userId = req.userId;
   const machineId = req.body.machine_id ?? req.body.machineId;
   const amount = Number(req.body.amount);
   const channel = String(req.body.channel ?? '').toUpperCase();

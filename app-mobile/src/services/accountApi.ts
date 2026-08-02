@@ -1,3 +1,5 @@
+import * as SecureStore from 'expo-secure-store';
+
 // Client HTTP alinhado ao contrato REAL do backend
 // (src/controllers/accountController.ts), não ao mock antigo.
 //
@@ -9,6 +11,7 @@
 // máquina na rede local (ex: 'http://192.168.101.13:8000'), igual
 // já é feito no restante do app.
 const API_BASE = process.env.EXPO_PUBLIC_API_BASE ?? 'http://192.168.101.13:8000';
+const TOKEN_KEY = 'teddycash_token';
 
 export type BalanceResponse = {
   user_id: string;
@@ -39,6 +42,11 @@ async function parseJsonSafe(res: Response) {
   }
 }
 
+async function getAuthHeaders() {
+  const token = await SecureStore.getItemAsync(TOKEN_KEY);
+  return token ? { Authorization: `Bearer ${token}` } : {} as Record<string, string>;
+}
+
 export async function getBalance(userId: string): Promise<BalanceResponse> {
   const res = await fetch(`${API_BASE}/balance/${userId}`);
   if (!res.ok) {
@@ -48,7 +56,8 @@ export async function getBalance(userId: string): Promise<BalanceResponse> {
 }
 
 export async function getTransactions(userId: string): Promise<TransactionResponse[]> {
-  const res = await fetch(`${API_BASE}/transactions/${userId}`);
+  const headers = await getAuthHeaders();
+  const res = await fetch(`${API_BASE}/transactions/${userId}`, { headers: headers as HeadersInit });
   if (!res.ok) {
     throw new Error(`Falha ao buscar transações (HTTP ${res.status})`);
   }
@@ -60,10 +69,15 @@ export async function transfer(
   amount: number,
   machineId: string,
 ): Promise<TransferResult> {
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(await getAuthHeaders()),
+  } as Record<string, string>;
+
   const res = await fetch(`${API_BASE}/transfer`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ user_id: userId, amount, machine_id: machineId }),
+    headers: headers as HeadersInit,
+    body: JSON.stringify({ amount, machine_id: machineId }),
   });
 
   const body = await parseJsonSafe(res);

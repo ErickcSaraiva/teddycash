@@ -22,6 +22,13 @@ export interface RegisterResponse {
   userId: string;
 }
 
+export interface ProfileResponse {
+  user_id: string;
+  username: string;
+  email: string;
+  avatarUrl?: string | null;
+}
+
 export interface BalanceResponse {
   user_id: string;
   balance: number;
@@ -59,7 +66,24 @@ async function get<T>(path: string, token?: string): Promise<T> {
   return res.json();
 }
 
-// ── API pública ───────────────────────────────────────────────────────────────
+async function patch<T>(path: string, body?: object, token?: string): Promise<T> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: 'PATCH',
+    headers,
+    body: body ? JSON.stringify(body) : undefined,
+  });
+
+  if (!res.ok) {
+    const detail = await res.json().catch(() => ({}));
+    throw new Error(detail?.detail || detail?.error || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+// ── API pública ─────────────────────────────────────────────────────────────────
 
 export const authApi = {
   /**
@@ -87,6 +111,15 @@ export const authApi = {
 
     return { ...data, token, userId };
   },
+
+  getProfile: (userId: string, token: string): Promise<ProfileResponse> =>
+    get<ProfileResponse>(`/profile/${userId}`, token),
+
+  updateProfile: (
+    userId: string,
+    body: { username?: string; email?: string; avatarUrl?: string | null },
+    token: string,
+  ): Promise<ProfileResponse> => patch<ProfileResponse>(`/profile/${userId}`, body, token),
 
   /**
    * GET token salvo localmente
