@@ -48,8 +48,8 @@ export default function HomeScreen() {
   const { token, userId, username, balance, refreshBalance, refreshing } = useAuth();
 
   const displayName = username ?? (userId ? 'Usuário' : 'Usuário');
-  const credits = balance ?? 0;
-  const balanceLabel = `R$ ${(credits ?? 0).toFixed(2)}`;
+  const credits = balance;
+  const balanceLabel = balance === null ? 'Carregando saldo...' : `R$ ${(credits ?? 0).toFixed(2)}`;
 
   return (
     <ScrollView
@@ -62,9 +62,9 @@ export default function HomeScreen() {
           {getGreeting()}, {displayName} 👋
         </Text>
         {token ? (
-          <Pressable onPress={refreshBalance} style={styles.refreshBtn} disabled={refreshing}>
+          <Pressable onPress={() => refreshBalance()} style={styles.refreshBtn} disabled={refreshing || balance === null}>
             <Text style={[styles.refreshText, { color: palette.primary }]}>
-              {refreshing ? 'Atualizando...' : 'Atualizar saldo'}
+              {refreshing ? 'Atualizando...' : balance === null ? 'Saldo indisponível' : 'Atualizar saldo'}
             </Text>
           </Pressable>
         ) : null}
@@ -72,14 +72,14 @@ export default function HomeScreen() {
 
       <View style={[styles.balanceCard, { backgroundColor: palette.card }]}>
         <Text style={[styles.balanceLabel, { color: palette.softText }]}>Saldo</Text>
-        <Text style={[styles.balanceValue, { color: palette.primary }]}>
+        <Text style={[styles.balanceValue, { color: palette.primary }]}> 
           {balanceLabel}
         </Text>
 
         <View style={[styles.divider, { backgroundColor: palette.softText + '33' }]} />
 
         <Text style={[styles.coinsValue, { color: palette.accent }]}> 
-          💳 {credits} créditos
+          💳 {balance === null ? 'Carregando...' : `${credits} créditos`}
         </Text>
 
         <Pressable

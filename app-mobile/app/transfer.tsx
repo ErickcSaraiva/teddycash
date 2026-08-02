@@ -24,9 +24,11 @@ export default function TransferScreen() {
 
   const credits = Number(amount.replace(',', '.'));
   const validAmount = Number.isFinite(credits) && credits > 0;
+  const balanceKnown = balance !== null && balance !== undefined;
+  const allowed = balanceKnown ? credits <= (balance as number) : false;
 
   function goToConfirmation() {
-    if (!machineId.trim() || !validAmount) return;
+    if (!machineId.trim() || !validAmount || !balanceKnown || !allowed) return;
 
     router.push({
       pathname: '/transfer-confirm',
@@ -59,8 +61,8 @@ export default function TransferScreen() {
           <Text style={[styles.balanceLabel, { color: palette.softText }]}>
             Saldo disponível
           </Text>
-          <Text style={[styles.balanceValue, { color: palette.primary }]}>
-            {balance ?? 0} créditos
+          <Text style={[styles.balanceValue, { color: palette.primary }]}> 
+            {balanceKnown ? `${balance} créditos` : 'Saldo indisponível'}
           </Text>
         </View>
 
@@ -85,17 +87,17 @@ export default function TransferScreen() {
         />
 
         <Pressable
-          disabled={!machineId.trim() || !validAmount}
+          disabled={!machineId.trim() || !validAmount || !balanceKnown || !allowed}
           onPress={goToConfirmation}
           style={[
             styles.button,
             {
               backgroundColor:
-                machineId.trim() && validAmount ? palette.primary : palette.softText,
+                machineId.trim() && validAmount && balanceKnown && allowed ? palette.primary : palette.softText,
             },
           ]}
         >
-          <Text style={styles.buttonText}>Revisar transferência</Text>
+          <Text style={styles.buttonText}>{!balanceKnown ? 'Saldo indisponível' : !allowed ? 'Valor maior que o saldo' : 'Revisar transferência'}</Text>
         </Pressable>
       </View>
     </KeyboardAvoidingView>

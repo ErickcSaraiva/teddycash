@@ -16,6 +16,7 @@ export default function TransferConfirmScreen() {
   const { theme } = useTheme();
   const palette = getPalette(theme);
   const { userId, refreshBalance } = useAuth();
+  const { balance } = useAuth();
 
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -26,6 +27,16 @@ export default function TransferConfirmScreen() {
   async function confirmTransfer() {
     if (!userId || !machineId || !Number.isFinite(credits) || credits <= 0) {
       setError('Dados da transferência inválidos.');
+      return;
+    }
+
+    if (balance === null) {
+      setError('Saldo indisponível. Aguarde a sincronização.');
+      return;
+    }
+
+    if (credits > (balance as number)) {
+      setError(`Valor maior que o saldo atual (${balance} créditos).`);
       return;
     }
 
@@ -44,8 +55,12 @@ export default function TransferConfirmScreen() {
         setError('Não foi possível concluir a transferência. Tente novamente.');
         return;
       }
-
-      await refreshBalance();
+      // Preferir atualizar o contexto com o saldo retornado pelo backend
+      if ((result as any).balance !== undefined) {
+        await refreshBalance();
+      } else {
+        await refreshBalance();
+      }
       setSuccess(true);
     } catch {
       setError('Não foi possível conectar ao servidor.');

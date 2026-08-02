@@ -48,7 +48,8 @@ async function getAuthHeaders() {
 }
 
 export async function getBalance(userId: string): Promise<BalanceResponse> {
-  const res = await fetch(`${API_BASE}/balance/${userId}`);
+  const headers = await getAuthHeaders();
+  const res = await fetch(`${API_BASE}/balance/${userId}`, { headers: headers as HeadersInit });
   if (!res.ok) {
     throw new Error(`Falha ao buscar saldo (HTTP ${res.status})`);
   }

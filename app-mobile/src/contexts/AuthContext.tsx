@@ -15,6 +15,7 @@ import { authApi } from '../services/authApi';
 
 const KEY_TOKEN   = 'teddycash_token';
 const KEY_USER_ID = 'teddycash_user_id';
+const KEY_BALANCE  = 'teddycash_balance';
 
 // ── Tipos ─────────────────────────────────────────────────────────────────────
 
@@ -34,7 +35,7 @@ interface AuthState {
 interface AuthContextValue extends AuthState {
   login:          (email: string, password: string) => Promise<void>;
   logout:         () => Promise<void>;
-  refreshBalance: () => Promise<void>;
+  refreshBalance: () => Promise<number | null>;
   updateProfile:  (data: { username?: string; email?: string; avatarUrl?: string | null }) => Promise<void>;
 }
 
@@ -66,13 +67,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     (async () => {
       try {
-        const [token, userId] = await Promise.all([
+        const [token, userId, cachedBalance] = await Promise.all([
           SecureStore.getItemAsync(KEY_TOKEN),
           SecureStore.getItemAsync(KEY_USER_ID),
+          SecureStore.getItemAsync(KEY_BALANCE),
         ]);
 
         if (token && userId) {
-          // Sessão encontrada — busca perfil e saldo imediatamente
+          // Sessão encontrada — usa saldo em cache (se houver) imediatamente
+          // para evitar mostrar zero enquanto a primeira requisição de rede falha.
+          if (mounted.current && cachedBalance) {
+            const parsed = Number(cachedBalance);
+            setState((s) => ({ ...s, token, userId, balance: Number.isFinite(parsed) ? parsed : s.balance }));
+          }
+
+          // Busca perfil e saldo no backend (substitui o cache quando disponível)
           const [profile, balanceResponse] = await Promise.all([
             authApi.getProfile(userId, token),
             authApi.getBalance(userId, token),
@@ -89,6 +98,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               loading: false,
               refreshing: false,
             });
+            // persistir saldo obtido
+            await SecureStore.setItemAsync(KEY_BALANCE, String(balanceResponse.balance)).catch(() => {});
           }
         } else {
           if (mounted.current) setState((s) => ({ ...s, loading: false }));
@@ -137,6 +148,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         loading: false,
         refreshing: false,
       });
+      if (balance !== null) {
+        await SecureStore.setItemAsync(KEY_BALANCE, String(balance)).catch(() => {});
+      }
     }
   }, []);
 
@@ -176,10 +190,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   // ── refreshBalance ────────────────────────────────────────────────────────
- const refreshBalance = useCallback(async () => {
+const refreshBalance = useCallback(async (): Promise<number | null> => {
   const { token, userId } = state;
 
-  if (!token || !userId) return;
+  if (!token || !userId) return null;
 
   if (mounted.current) {
     setState((prev) => ({ ...prev, refreshing: true }));
@@ -190,7 +204,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (mounted.current) {
       setState((prev) => ({ ...prev, balance }));
+      await SecureStore.setItemAsync(KEY_BALANCE, String(balance)).catch(() => {});
+      return balance;
     }
+    return null;
   } finally {
     if (mounted.current) {
       setState((prev) => ({ ...prev, refreshing: false }));

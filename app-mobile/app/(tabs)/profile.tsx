@@ -11,6 +11,8 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import { uploadImageAsync } from '@/src/services/upload';
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/src/contexts/ThemeContext';
 import { getPalette } from '@/src/theme/palettes';
@@ -31,6 +33,7 @@ export default function ProfileScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   const displayAvatar = useMemo(() => {
     if (formAvatarUrl) {
@@ -49,17 +52,54 @@ export default function ProfileScreen() {
     setSuccess(false);
 
     try {
-      await updateProfile({
+      const payload: { username?: string; email?: string; avatarUrl?: string | null } = {
         username: formUsername.trim(),
         email: formEmail.trim(),
-        avatarUrl: formAvatarUrl.trim() || null,
-      });
+      };
+
+      // Only include avatarUrl when the user provided a value.
+      // Leaving the field blank will not clear the existing avatar on the server.
+      if (formAvatarUrl.trim() !== '') {
+        payload.avatarUrl = formAvatarUrl.trim();
+      }
+
+      await updateProfile(payload);
       setSuccess(true);
       setEditMode(false);
     } catch (err: any) {
       setError(err?.message ?? 'Não foi possível atualizar o perfil.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const pickAndUploadImage = async () => {
+    setError(null);
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        setError('Permissão de acesso à galeria negada.');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        quality: 0.8,
+      });
+
+      // compat com diferentes SDKs
+      const uri = (result as any).assets?.[0]?.uri ?? (result as any).uri;
+      if (!uri) return;
+
+      setUploading(true);
+      const uploadedUrl = await uploadImageAsync(uri);
+      setFormAvatarUrl(uploadedUrl);
+      setSuccess(true);
+    } catch (err: any) {
+      setError(err?.message ?? 'Falha ao enviar imagem.');
+    } finally {
+      setUploading(false);
     }
   };
 
