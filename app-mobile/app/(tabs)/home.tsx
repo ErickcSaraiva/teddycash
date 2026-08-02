@@ -99,6 +99,22 @@ export default function HomeScreen() {
         cardColor={palette.card}
         textColor={palette.text}
       />
+      
+      <ActionCard
+        icon="🕹️"
+        title="Transferir para máquina"
+        onPress={() => router.push('/transfer')}
+        cardColor={palette.card}
+        textColor={palette.text}
+      />
+
+      <ActionCard
+        icon="📜"
+        title="Histórico"
+        onPress={() => router.push('/transactions')}
+        cardColor={palette.card}
+        textColor={palette.text}
+      />
 
       <ActionCard
         icon="🎁"

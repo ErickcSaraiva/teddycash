@@ -3,43 +3,44 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// Conexão com o banco de dados PostgreSQL
+// Conexão com o banco de dados PostgreSQL.
+// A URL é fornecida pela configuração Prisma do projeto.
 datasource db {
   provider = "postgresql"
 }
 
-// --------------------------------------------------
-// REGRAS DE NEGÓCIO - TABELAS
-// --------------------------------------------------
-
-// Tabela de Utilizadores (Fidelidade, Saldo e Cashback)
+// Usuários, saldo e cashback.
 model User {
-  id            String        @id @default(uuid())
-  username      String        @unique
-  email         String        @unique
-  password      String        // <-- CAMPO DE SENHA ADICIONADO AQUI 🔐
-  balance       Float         @default(0.0)
-  cashback      Float         @default(0.0)
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  
-  transactions  Transaction[] 
-  gameSessions  GameSession[] // Relacionamento com os jogos
+  id        String   @id @default(uuid())
+  username  String   @unique
+  email     String   @unique
+  password  String
+  balance   Float    @default(0.0)
+  cashback  Float    @default(0.0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  transactions   Transaction[]
+  gameSessions   GameSession[]
+  authorizations MachineAuthorization[]
 }
 
-// Tabela de Transações (Extrato e Segurança)
+// Extrato de créditos e débitos.
 model Transaction {
   id        String   @id @default(uuid())
   userId    String
   amount    Float
-  type      String   // Ex: 'CREDIT_PURCHASE', 'CASHBACK_EARNED', 'MACHINE_UNLOCK'
-  machineId String?  
+  type      String
+  machineId String?
   createdAt DateTime @default(now())
-  
-  user      User     @relation(fields: [userId], references: [id])
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, createdAt])
+  @@index([machineId, createdAt])
 }
 
-// Tabela do Motor de Live-Ops (Temas dinâmicos)
+// Configurações globais do Live-Ops.
 model ThemeSettings {
   id          Int      @id @default(1)
   theme       String   @default("default")
@@ -47,12 +48,42 @@ model ThemeSettings {
   lastUpdated DateTime @updatedAt
 }
 
-// NOVA TABELA: Motor de Gamificação (Anti-Cheat / Opção B)
+// Sessões do motor de gamificação.
 model GameSession {
   id          String   @id @default(uuid())
   userId      String
   coinsEarned Int
   createdAt   DateTime @default(now())
-  
-  user        User     @relation(fields: [userId], references: [id])
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, createdAt])
+}
+
+// Ciclo de vida da autorização entregue à máquina por QR Code ou NFC.
+enum MachineAuthorizationStatus {
+  PENDING
+  PROCESSING
+  CONSUMED
+}
+
+// Uma autorização é criada no app, lida pela máquina e consumida uma única vez.
+// O saldo só é debitado no resgate confirmado pela máquina.
+model MachineAuthorization {
+  id        String                     @id @default(uuid())
+  token     String                     @unique
+  userId    String
+  machineId String
+  amount    Float
+  channel   String
+  status    MachineAuthorizationStatus @default(PENDING)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime                   @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([machineId, status])
+  @@index([expiresAt])
+  @@index([userId, createdAt])
 }

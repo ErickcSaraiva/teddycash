@@ -13,25 +13,24 @@ function AppNavigator() {
   const segments = useSegments();
   const router = useRouter();
 
-  useEffect(() => {
-    if (loading) return;
+  useEffect(() => {const isAuthRoute = segments[0] === 'login' || segments[0] === 'register';
 
-    const isAuthRoute = segments[0] === 'login' || segments[0] === 'register';
-    const isTabsRoute = segments[0] === '(tabs)';
+const isProtectedRoute =
+  segments[0] === '(tabs)' ||
+  segments[0] === 'transfer' ||
+  segments[0] === 'transfer-confirm' ||
+  segments[0] === 'transactions';
 
-    if (!token && isTabsRoute) {
-      router.replace('/login');
-      return;
-    }
+if (!token && isProtectedRoute) {
+  router.replace('/login');
+  return;
+}
 
-    if (token && isAuthRoute) {
-      router.replace('/home');
-      return;
-    }
+if (token && isAuthRoute) {
+  router.replace('/home');
+  return;
+}
 
-    if (!token && segments[0] === undefined) {
-      router.replace('/login');
-    }
   }, [token, loading, segments, router]);
 
   if (loading) {

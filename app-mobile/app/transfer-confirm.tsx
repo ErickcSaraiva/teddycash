@@ -1,0 +1,138 @@
+import { useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useTheme } from '@/src/contexts/ThemeContext';
+import { getPalette } from '@/src/theme/palettes';
+import { useAuth } from '@/src/hooks/useAuth';
+import { transfer } from '@/src/services/accountApi';
+
+export default function TransferConfirmScreen() {
+  const router = useRouter();
+  const { machineId, amount } = useLocalSearchParams<{
+    machineId: string;
+    amount: string;
+  }>();
+
+  const { theme } = useTheme();
+  const palette = getPalette(theme);
+  const { userId, refreshBalance } = useAuth();
+
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState('');
+
+  const credits = Number(amount);
+
+  async function confirmTransfer() {
+    if (!userId || !machineId || !Number.isFinite(credits) || credits <= 0) {
+      setError('Dados da transferência inválidos.');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const result = await transfer(userId, credits, machineId);
+
+      if (result.status === 'insufficient') {
+        setError(`Saldo insuficiente. Saldo atual: ${result.balance} créditos.`);
+        return;
+      }
+
+      if (result.status !== 'ok') {
+        setError('Não foi possível concluir a transferência. Tente novamente.');
+        return;
+      }
+
+      await refreshBalance();
+      setSuccess(true);
+    } catch {
+      setError('Não foi possível conectar ao servidor.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (success) {
+    return (
+      <View style={[styles.container, { backgroundColor: palette.background }]}>
+        <View style={styles.content}>
+          <Text style={styles.successEmoji}>🧸</Text>
+          <Text style={[styles.title, { color: palette.text }]}>Transferência concluída!</Text>
+          <Text style={[styles.message, { color: palette.softText }]}>
+            {credits} créditos foram enviados para a máquina {machineId}.
+          </Text>
+
+          <Pressable
+            style={[styles.button, { backgroundColor: palette.primary }]}
+            onPress={() => router.replace('/home')}
+          >
+            <Text style={styles.buttonText}>Voltar para Home</Text>
+          </Pressable>
+
+          <Pressable onPress={() => router.replace('/transactions')}>
+            <Text style={[styles.historyLink, { color: palette.primary }]}>
+              Ver histórico
+            </Text>
+          </Pressable>
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <View style={[styles.container, { backgroundColor: palette.background }]}>
+      <View style={styles.content}>
+        <Pressable onPress={() => router.back()}>
+          <Text style={[styles.back, { color: palette.primary }]}>‹ Voltar</Text>
+        </Pressable>
+
+        <Text style={[styles.title, { color: palette.text }]}>Confirmar transferência</Text>
+
+        <View style={[styles.summary, { backgroundColor: palette.card }]}>
+          <Text style={[styles.summaryLabel, { color: palette.softText }]}>Máquina</Text>
+          <Text style={[styles.summaryValue, { color: palette.text }]}>{machineId}</Text>
+
+          <Text style={[styles.summaryLabel, { color: palette.softText }]}>Créditos</Text>
+          <Text style={[styles.summaryValue, { color: palette.primary }]}>
+            {credits} créditos
+          </Text>
+        </View>
+
+        {error ? <Text style={styles.error}>{error}</Text> : null}
+
+        <Pressable
+          disabled={loading}
+          style={[styles.button, { backgroundColor: palette.primary }]}
+          onPress={confirmTransfer}
+        >
+          <Text style={styles.buttonText}>
+            {loading ? 'Transferindo...' : 'Confirmar transferência'}
+          </Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+  content: { flex: 1, padding: 20, paddingTop: 64 },
+  back: { fontSize: 16, fontWeight: '700', marginBottom: 24 },
+  title: { fontSize: 28, fontWeight: '800', marginBottom: 24 },
+  summary: { borderRadius: 18, padding: 20 },
+  summaryLabel: { fontSize: 13, marginBottom: 5 },
+  summaryValue: { fontSize: 20, fontWeight: '800', marginBottom: 20 },
+  error: { color: '#E74C3C', fontWeight: '600', marginTop: 18 },
+  button: {
+    alignItems: 'center',
+    borderRadius: 14,
+    paddingVertical: 16,
+    marginTop: 24,
+  },
+  buttonText: { color: '#FFFFFF', fontSize: 16, fontWeight: '800' },
+  successEmoji: { fontSize: 54, textAlign: 'center', marginBottom: 18 },
+  message: { fontSize: 16, lineHeight: 24, textAlign: 'center' },
+  historyLink: { fontSize: 16, fontWeight: '700', textAlign: 'center', marginTop: 22 },
+});
