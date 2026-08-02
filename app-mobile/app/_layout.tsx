@@ -6,7 +6,7 @@ import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { ThemeProvider as LiveOpsThemeProvider } from '@/src/contexts/ThemeContext';
-import { AuthProvider, useAuth } from '@/src/context/AuthContext';
+import { AuthProvider, useAuth } from '@/src/contexts/AuthContext';
 
 function AppNavigator() {
   const { token, loading } = useAuth();

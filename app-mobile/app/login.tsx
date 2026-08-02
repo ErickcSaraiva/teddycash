@@ -16,6 +16,7 @@ import {
 import { router } from 'expo-router';
 import { useAuth } from '@/src/hooks/useAuth';
 import { authService } from '@/src/services/auth';
+
 const { height } = Dimensions.get('window');
 
 const C = {
@@ -392,7 +393,7 @@ const PhoneView = ({
 );
 
 export default function LoginScreen() {
-  const { signIn } = useAuth();
+  const { login } = useAuth();
 
   const [currentView, setCurrentView] = useState<ViewName>('landing');
   const [email, setEmail] = useState('');
@@ -407,18 +408,22 @@ export default function LoginScreen() {
   const glowAnim = useRef(new Animated.Value(0.6)).current;
 
   useEffect(() => {
-    Animated.loop(
+    const animation = Animated.loop(
       Animated.sequence([
         Animated.timing(glowAnim, { toValue: 1, duration: 2400, useNativeDriver: true }),
         Animated.timing(glowAnim, { toValue: 0.6, duration: 2400, useNativeDriver: true }),
       ])
-    ).start();
+    );
+
+    animation.start();
+
+    return () => animation.stop();
   }, [glowAnim]);
 
   const clearError = useCallback(() => setError(''), []);
 
   const onLoginSuccess = useCallback(() => {
-    router.replace('/home');
+    router.replace('/(tabs)/home');
   }, []);
 
   const handleGoogleLogin = useCallback(async () => {
@@ -473,16 +478,19 @@ export default function LoginScreen() {
         await authService.register(generatedUsername, cleanEmail, password);
       }
 
-      await signIn(cleanEmail, password);
+      await login(cleanEmail, password);
       onLoginSuccess();
-      
     } catch (e: any) {
-      // O erro que vem do backend (ex: "Email já em uso" ou "Senha incorreta") aparece aqui
-      setError(e?.message ?? 'Ocorreu um erro. Tente novamente.');
+      setError(
+        e?.message ??
+          (isSignUp
+            ? 'Não foi possível criar a conta. Tente novamente.'
+            : 'E-mail ou senha incorretos.')
+      );
     } finally {
       setLoading(false);
     }
-  }, [email, password, isSignUp, clearError, onLoginSuccess]);
+  }, [email, password, isSignUp, login, clearError, onLoginSuccess]);
 
   const handleSendOtp = useCallback(async () => {
     const digits = phone.replace(/\D/g, '');

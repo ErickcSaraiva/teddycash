@@ -5,12 +5,13 @@ import { useTheme } from '@/src/contexts/ThemeContext';
 import { getPalette } from '@/src/theme/palettes';
 import { useAuth } from '@/src/hooks/useAuth';
 import { authService } from '@/src/services/auth';
+import login from './login';
 
 export default function RegisterScreen() {
   const router = useRouter();
   const { theme } = useTheme();
   const palette = getPalette(theme);
-  const { signIn } = useAuth();
+  const { login } = useAuth();
 
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -28,7 +29,7 @@ export default function RegisterScreen() {
 
     try {
       await authService.register(username, email, password);
-      await signIn(email, password);
+      await login(email, password);
 
       Alert.alert('Sucesso!', 'A tua conta foi criada e você já está logado.');
       router.replace('/home');

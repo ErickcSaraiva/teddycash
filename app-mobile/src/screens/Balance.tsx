@@ -188,7 +188,7 @@ function makeStyles(palette: ReturnType<typeof getPalette>) {
     coinsSuffix: { color: palette.softText, marginBottom: 4 },
     divider: {
       height: 1,
-      backgroundColor: palette.cardAlt,
+      backgroundColor: palette.card,
       marginVertical: 14,
     },
     cashbackRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
@@ -215,7 +215,7 @@ function makeStyles(palette: ReturnType<typeof getPalette>) {
     txTitle: { fontSize: 14, fontWeight: '700', color: palette.text },
     txSubtitle: { marginTop: 4, color: palette.softText, fontSize: 12 },
     txAmount: { fontSize: 16, fontWeight: '800', color: palette.primary },
-    errorText: { color: palette.danger, textAlign: 'center', marginBottom: 12, paddingHorizontal: 24 },
+    errorText: { color: '#EF4444', textAlign: 'center', marginBottom: 12, paddingHorizontal: 24 },
     retryText: { color: palette.primary, fontWeight: '700' },
   });
 }

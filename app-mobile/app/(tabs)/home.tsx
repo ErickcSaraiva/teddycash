@@ -80,6 +80,7 @@ export default function HomeScreen() {
 
         <Text style={[styles.coinsValue, { color: palette.accent }]}> 
           💳 {credits} créditos
+        </Text>
 
         <Pressable
           style={[styles.earnButton, { backgroundColor: palette.primary }]}

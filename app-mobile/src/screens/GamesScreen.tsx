@@ -71,7 +71,7 @@ export default function GamesScreen({ userId = 'user1' }: Props) {
     buttonText: {
       fontSize: 28,
       fontWeight: 'bold',
-      color: palette.primaryText,
+      color: '#FFFFFF',
     },
     progressText: {
       marginTop: 30,
@@ -93,7 +93,7 @@ export default function GamesScreen({ userId = 'user1' }: Props) {
         disabled={isLoading}
       >
         {isLoading ? (
-          <ActivityIndicator size="large" color={palette.primaryText} />
+          <ActivityIndicator size="large" color={'#FFFFFF'} />
         ) : (
           <Text style={styles.buttonText}>TOCA!</Text>
         )}

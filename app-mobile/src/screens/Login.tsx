@@ -1,5 +1,5 @@
 // mobile-ts/src/screens/Login.tsx
-
+import { useAuth } from '../hooks/useAuth'
 import React, { useState, useRef, useCallback } from 'react';
 import {
   View,
@@ -15,7 +15,6 @@ import {
   Dimensions,
   SafeAreaView,
 } from 'react-native';
-import { useAuth } from '../hooks/useAuth'
 
 const { height } = Dimensions.get('window');
 
@@ -392,9 +391,7 @@ const PhoneView = ({
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function LoginScreen({ onLoginSuccess }: { onLoginSuccess?: () => void }) {
-  // ── AuthContext ─────────────────────────────────────────────────────────
-  // login() chama POST /auth/login + GET /balance e salva no SecureStore
-  const { signIn } = useAuth();
+  const { login } = useAuth();
 
   // ── Estado local ────────────────────────────────────────────────────────
   const [currentView, setCurrentView] = useState<ViewName>('landing');
@@ -433,7 +430,7 @@ export default function LoginScreen({ onLoginSuccess }: { onLoginSuccess?: () =>
     clearError();
     try {
       // TODO: await GoogleSignIn.signIn() → pegar idToken → enviar ao backend
-      await signIn('google@teddycash.com', 'google-demo');
+      await login('google@teddycash.com', 'google-demo');
       onLoginSuccess?.();
     } catch (e: any) {
       setError(e?.message ?? 'Falha no login com Google. Tente novamente.');
@@ -451,7 +448,7 @@ export default function LoginScreen({ onLoginSuccess }: { onLoginSuccess?: () =>
     clearError();
     try {
       // TODO: await AppleAuthentication.signInAsync() → enviar ao backend
-      await signIn('apple@teddycash.com', 'apple-demo');
+      await login('apple@teddycash.com', 'apple-demo');
       onLoginSuccess?.();
     } catch (e: any) {
       setError(e?.message ?? 'Falha no login com Apple. Tente novamente.');
@@ -480,7 +477,7 @@ export default function LoginScreen({ onLoginSuccess }: { onLoginSuccess?: () =>
     setLoading(true);
     clearError();
     try {
-      await signIn(email.trim().toLowerCase(), password);
+      await login(email.trim().toLowerCase(), password);
       onLoginSuccess?.();
     } catch (e: any) {
       setError(e?.message ?? 'E-mail ou senha incorretos.');
