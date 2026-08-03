@@ -54,6 +54,7 @@ export const transfer = async (req: AuthRequest, res: Response) => {
   const userId = req.userId;
   const machineId = req.body.machine_id ?? req.body.machineId;
   const amount = Number(req.body.amount);
+  const channel = String(req.body.channel ?? '').toUpperCase();
 
   if (!userId || !machineId || !Number.isFinite(amount) || amount <= 0) {
     return res.status(400).json({ error: 'machine_id and a positive amount are required.' });
@@ -253,12 +254,13 @@ export const redeemMachineAuthorization = async (req: Request, res: Response) =>
         throw new InsufficientBalanceError();
       }
 
+      const transactionType = channel === 'NFC' ? 'MACHINE_UNLOCK_NFC' : channel === 'QR' ? 'MACHINE_UNLOCK_QR' : 'MACHINE_UNLOCK';
       const transaction = await tx.transaction.create({
         data: {
           userId: authorization.userId,
           amount: -authorization.amount,
           machineId: authorization.machineId,
-          type: 'MACHINE_UNLOCK',
+          type: transactionType,
         },
       });
 

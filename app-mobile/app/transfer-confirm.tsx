@@ -8,9 +8,10 @@ import { transfer } from '@/src/services/accountApi';
 
 export default function TransferConfirmScreen() {
   const router = useRouter();
-  const { machineId, amount } = useLocalSearchParams<{
+  const { machineId, amount, method } = useLocalSearchParams<{
     machineId: string;
     amount: string;
+    method?: 'NFC' | 'QR';
   }>();
 
   const { theme } = useTheme();
@@ -23,6 +24,7 @@ export default function TransferConfirmScreen() {
   const [error, setError] = useState('');
 
   const credits = Number(amount);
+  const selectedMethod = method === 'NFC' ? 'NFC' : 'QR Code';
 
   async function confirmTransfer() {
     if (!userId || !machineId || !Number.isFinite(credits) || credits <= 0) {
@@ -44,7 +46,7 @@ export default function TransferConfirmScreen() {
     setError('');
 
     try {
-      const result = await transfer(userId, credits, machineId);
+      const result = await transfer(userId, credits, machineId, method === 'NFC' ? 'NFC' : 'QR');
 
       if (result.status === 'insufficient') {
         setError(`Saldo insuficiente. Saldo atual: ${result.balance} créditos.`);
@@ -113,7 +115,8 @@ export default function TransferConfirmScreen() {
           <Text style={[styles.summaryValue, { color: palette.primary }]}>
             {credits} créditos
           </Text>
-        </View>
+          <Text style={[styles.summaryLabel, { color: palette.softText }]}>Método</Text>\
+          <Text style={[styles.summaryValue, { color: palette.text }]}>{selectedMethod}</Text>\        </View>
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
 

@@ -8,6 +8,7 @@
     "build": "tsc -p .",
     "start": "node dist/server.js",
     "test:db": "ts-node src/teste-db.ts"
+    ,"test": "tsx --test src/*.test.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",

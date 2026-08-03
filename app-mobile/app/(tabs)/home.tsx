@@ -1,279 +1,104 @@
-import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Pressable,
-} from 'react-native';
-import { useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useTheme } from '@/src/contexts/ThemeContext';
 import { getPalette } from '@/src/theme/palettes';
 import { useAuth } from '@/src/hooks/useAuth';
-
-const FEATURED_REWARDS = [
-  { emoji: '💳', label: 'Pix' },
-  { emoji: '🎮', label: 'Steam' },
-  { emoji: '🎁', label: 'Google Play' },
-];
-
-function getGreeting(): string {
-  const hour = new Date().getHours();
-  if (hour < 12) return 'Bom dia';
-  if (hour < 18) return 'Boa tarde';
-  return 'Boa noite';
-}
-
-type ActionCardProps = {
-  icon: string;
-  title: string;
-  onPress: () => void;
-  cardColor: string;
-  textColor: string;
-};
-
-function ActionCard({ icon, title, onPress, cardColor, textColor }: ActionCardProps) {
-  return (
-    <Pressable style={[styles.actionCard, { backgroundColor: cardColor }]} onPress={onPress}>
-      <Text style={styles.actionEmoji}>{icon}</Text>
-      <Text style={[styles.actionLabel, { color: textColor }]}>{title}</Text>
-    </Pressable>
-  );
-}
+import { claimDailyCheckin, getApiError, type CheckinAlreadyClaimed } from '@/src/services/economyApi';
 
 export default function HomeScreen() {
+  const router = useRouter();
   const { theme } = useTheme();
   const palette = getPalette(theme);
-  const router = useRouter();
-  const { token, userId, username, balance, refreshBalance, refreshing } = useAuth();
+  const { username, balance, teddyCoins, refreshWallet, refreshing } = useAuth();
+  const [checkingIn, setCheckingIn] = useState(false);
+  const [nextCheckin, setNextCheckin] = useState<string | null>(null);
 
-  const displayName = username ?? (userId ? 'Usuário' : 'Usuário');
-  const credits = balance;
-  const balanceLabel = balance === null ? 'Carregando saldo...' : `R$ ${(credits ?? 0).toFixed(2)}`;
+  useFocusEffect(useCallback(() => { void refreshWallet().catch(() => {}); }, [refreshWallet]));
+
+  async function checkin() {
+    setCheckingIn(true);
+    try {
+      const result = await claimDailyCheckin();
+      setNextCheckin(result.next_checkin_at);
+      await refreshWallet();
+      Alert.alert('Check-in realizado', `Você recebeu ${result.reward} TeddyCoins.`);
+    } catch (error) {
+      const body = getApiError<CheckinAlreadyClaimed>(error);
+      if (body?.code === 'CHECKIN_ALREADY_CLAIMED') {
+        setNextCheckin(body.next_checkin_at);
+        Alert.alert('Check-in já realizado', body.message);
+      } else Alert.alert('Erro', 'Não foi possível realizar o check-in.');
+    } finally { setCheckingIn(false); }
+  }
 
   return (
-    <ScrollView
-      style={[styles.container, { backgroundColor: palette.background }]}
-      contentContainerStyle={styles.content}
-    >
-      <View style={styles.header}>
-        <Text style={[styles.appName, { color: palette.primary }]}>🧸 TeddyCash</Text>
-        <Text style={[styles.greeting, { color: palette.text }]}>
-          {getGreeting()}, {displayName} 👋
-        </Text>
-        {token ? (
-          <Pressable onPress={() => refreshBalance()} style={styles.refreshBtn} disabled={refreshing || balance === null}>
-            <Text style={[styles.refreshText, { color: palette.primary }]}>
-              {refreshing ? 'Atualizando...' : balance === null ? 'Saldo indisponível' : 'Atualizar saldo'}
-            </Text>
-          </Pressable>
-        ) : null}
+    <ScrollView style={[styles.container, { backgroundColor: palette.background }]} contentContainerStyle={styles.content}>
+      <Text style={[styles.brand, { color: palette.primary }]}>🧸 TeddyCash</Text>
+      <Text style={[styles.title, { color: palette.text }]}>Olá, {username ?? 'Usuário'} 👋</Text>
+      <View style={[styles.wallet, { backgroundColor: palette.card }]}>
+        <View><Text style={[styles.label, { color: palette.softText }]}>Créditos</Text><Text style={[styles.value, { color: palette.primary }]}>{balance ?? '—'}</Text></View>
+        <View><Text style={[styles.label, { color: palette.softText }]}>TeddyCoins</Text><Text style={[styles.value, { color: palette.accent }]}>🪙 {teddyCoins ?? '—'}</Text></View>
+      </View>
+      <Pressable onPress={() => void refreshWallet()} disabled={refreshing} style={styles.link}><Text style={{ color: palette.primary }}>{refreshing ? 'Atualizando...' : 'Atualizar carteira'}</Text></Pressable>
+
+      <View style={[styles.checkin, { backgroundColor: palette.card }]}>
+        <Text style={[styles.cardTitle, { color: palette.text }]}>Check-in diário</Text>
+        <Text style={{ color: palette.softText }}>Ganhe 10 TeddyCoins uma vez por dia.</Text>
+        {nextCheckin ? <Text style={[styles.next, { color: palette.softText }]}>Próximo: {new Date(nextCheckin).toLocaleString('pt-BR')}</Text> : null}
+        <Pressable onPress={checkin} disabled={checkingIn} style={[styles.button, { backgroundColor: palette.primary }]}><Text style={styles.buttonText}>{checkingIn ? 'Verificando...' : 'Fazer check-in'}</Text></Pressable>
       </View>
 
-      <View style={[styles.balanceCard, { backgroundColor: palette.card }]}>
-        <Text style={[styles.balanceLabel, { color: palette.softText }]}>Saldo</Text>
-        <Text style={[styles.balanceValue, { color: palette.primary }]}> 
-          {balanceLabel}
-        </Text>
-
-        <View style={[styles.divider, { backgroundColor: palette.softText + '33' }]} />
-
-        <Text style={[styles.coinsValue, { color: palette.accent }]}> 
-          💳 {balance === null ? 'Carregando...' : `${credits} créditos`}
-        </Text>
-
-        <Pressable
-          style={[styles.earnButton, { backgroundColor: palette.primary }]}
-          onPress={() => router.push('/home')}
-        >
-          <Text style={styles.earnButtonText}>+ Ganhar moedas</Text>
-        </Pressable>
+      <Text style={[styles.section, { color: palette.text }]}>Acesso rápido</Text>
+      <View style={styles.grid}>
+        <Action label="🎮 Minijogos" onPress={() => router.push('/games')} color={palette.card} text={palette.text} />
+        <Action label="🎁 Resgatar" onPress={() => router.push('/rewards')} color={palette.card} text={palette.text} />
+        <Action label="💳 Comprar" onPress={() => router.push('/add-credits')} color={palette.card} text={palette.text} />
+        <Action label="📜 Histórico" onPress={() => router.push('/transactions')} color={palette.card} text={palette.text} />
       </View>
 
-      <Text style={[styles.sectionTitle, { color: palette.text }]}>⚡ Acesso rápido</Text>
-
-      <ActionCard
-        icon="🎮"
-        title="Jogar"
-        onPress={() => router.push('/home')}
-        cardColor={palette.card}
-        textColor={palette.text}
-      />
-      
-      <ActionCard
-        icon="🕹️"
-        title="Transferir para máquina"
+      <Text style={[styles.transferSection, { color: palette.text }]}>Transferência para Máquina</Text>
+      <Pressable
         onPress={() => router.push('/transfer')}
-        cardColor={palette.card}
-        textColor={palette.text}
-      />
-
-      <ActionCard
-        icon="📜"
-        title="Histórico"
-        onPress={() => router.push('/transactions')}
-        cardColor={palette.card}
-        textColor={palette.text}
-      />
-
-      <ActionCard
-        icon="🎁"
-        title="Prêmios"
-        onPress={() => router.push('/home')}
-        cardColor={palette.card}
-        textColor={palette.text}
-      />
-
-      <ActionCard
-        icon="📅"
-        title="Check-in"
-        onPress={() => router.push('/home')}
-        cardColor={palette.card}
-        textColor={palette.text}
-      />
-
-      <Text style={[styles.sectionTitle, { color: palette.text }]}>🔥 Prêmios em destaque</Text>
-
-      <View style={[styles.rewardsCard, { backgroundColor: palette.card }]}>
-        {FEATURED_REWARDS.map((reward, index) => (
-          <View key={reward.label}>
-              <Pressable style={styles.rewardRow} onPress={() => router.push('/home')}>
-              <Text style={styles.rewardEmoji}>{reward.emoji}</Text>
-              <Text style={[styles.rewardLabel, { color: palette.text }]}>{reward.label}</Text>
-              <Text style={[styles.rewardArrow, { color: palette.softText }]}>›</Text>
-            </Pressable>
-            {index < FEATURED_REWARDS.length - 1 && (
-              <View style={[styles.rewardDivider, { backgroundColor: palette.softText + '22' }]} />
-            )}
-          </View>
-        ))}
-      </View>
+        style={[styles.transferCard, { backgroundColor: palette.card }]}
+        accessibilityRole="button"
+        accessibilityLabel="Transferir créditos para a máquina usando NFC ou QR Code"
+      >
+        <Text style={styles.transferIcon}>📲</Text>
+        <View style={styles.transferContent}>
+          <Text style={[styles.transferTitle, { color: palette.text }]}>Transferir créditos</Text>
+          <Text style={[styles.transferDescription, { color: palette.softText }]}>
+            Envie seus créditos diretamente para a máquina utilizando NFC ou QR Code.
+          </Text>
+        </View>
+        <Text style={[styles.transferArrow, { color: palette.softText }]}>›</Text>
+      </Pressable>
     </ScrollView>
   );
 }
-
+function Action({ label, onPress, color, text }: { label: string; onPress: () => void; color: string; text: string }) { return <Pressable onPress={onPress} style={[styles.action, { backgroundColor: color }]}><Text style={{ color: text, fontWeight: '700' }}>{label}</Text></Pressable>; }
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  content: {
-    padding: 20,
-    paddingBottom: 40,
-  },
-  header: {
-    marginTop: 60,
-    marginBottom: 24,
-  },
-  appName: {
-    fontSize: 15,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-    marginBottom: 6,
-  },
-  greeting: {
-    fontSize: 26,
-    fontWeight: 'bold',
-  },
-  refreshBtn: {
-    marginTop: 8,
-    alignSelf: 'flex-start',
-  },
-  refreshText: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  balanceCard: {
-    padding: 24,
-    borderRadius: 20,
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
-    marginBottom: 32,
-  },
-  balanceLabel: {
-    fontSize: 13,
-    fontWeight: '500',
-    marginBottom: 4,
-  },
-  balanceValue: {
-    fontSize: 40,
-    fontWeight: '800',
-    marginBottom: 16,
-  },
-  divider: {
-    height: 1,
-    marginBottom: 16,
-  },
-  coinsValue: {
-    fontSize: 20,
-    fontWeight: '700',
-    marginBottom: 20,
-  },
-  earnButton: {
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  earnButtonText: {
-    color: '#000',
-    fontWeight: '700',
-    fontSize: 15,
-  },
-  sectionTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    marginBottom: 12,
-  },
-  actionCard: {
+  container: { flex: 1 }, content: { padding: 20, paddingTop: 64, paddingBottom: 40 }, brand: { fontWeight: '800', marginBottom: 6 }, title: { fontSize: 28, fontWeight: '800', marginBottom: 24 },
+  wallet: { borderRadius: 20, padding: 22, flexDirection: 'row', justifyContent: 'space-between' }, label: { fontSize: 13, marginBottom: 6 }, value: { fontSize: 28, fontWeight: '800' }, link: { alignSelf: 'center', padding: 12 },
+  checkin: { borderRadius: 20, padding: 20, marginTop: 8 }, cardTitle: { fontSize: 19, fontWeight: '800', marginBottom: 5 }, next: { marginTop: 8, fontSize: 12 }, button: { padding: 13, borderRadius: 12, alignItems: 'center', marginTop: 16 }, buttonText: { color: '#fff', fontWeight: '800' },
+  section: { fontSize: 18, fontWeight: '800', marginTop: 28, marginBottom: 12 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  action: { flexBasis: '48%', flexGrow: 1, borderRadius: 15, padding: 18 },
+  transferSection: { fontSize: 18, fontWeight: '800', marginTop: 24, marginBottom: 12 },
+  transferCard: {
+    width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
+    borderRadius: 15,
     padding: 18,
-    borderRadius: 16,
-    marginBottom: 10,
     shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2,
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 3,
   },
-  actionEmoji: {
-    fontSize: 22,
-    marginRight: 14,
-  },
-  actionLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  rewardsCard: {
-    borderRadius: 20,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
-    marginBottom: 12,
-  },
-  rewardRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-  },
-  rewardEmoji: {
-    fontSize: 22,
-    marginRight: 14,
-  },
-  rewardLabel: {
-    flex: 1,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  rewardArrow: {
-    fontSize: 22,
-    fontWeight: '300',
-  },
-  rewardDivider: {
-    height: 1,
-    marginHorizontal: 20,
-  },
+  transferIcon: { fontSize: 26, marginRight: 14 },
+  transferContent: { flex: 1, paddingRight: 12 },
+  transferTitle: { fontSize: 16, fontWeight: '700', marginBottom: 5 },
+  transferDescription: { fontSize: 13, lineHeight: 19 },
+  transferArrow: { fontSize: 28, fontWeight: '300' },
 });

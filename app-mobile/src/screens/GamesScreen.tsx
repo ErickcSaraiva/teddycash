@@ -22,13 +22,13 @@ export default function GamesScreen({ userId = 'user1' }: Props) {
     const newClicks = clicks + 1;
     setClicks(newClicks);
 
-    // Quando chegar a 10 cliques, ganha 50 moedas!
+    // Tela legada: o backend apenas inicia uma sessão e cobra a entrada.
     if (newClicks >= 10) {
       setIsLoading(true);
       try {
         await submitGameScore(userId, 50);
-        Alert.alert('🎉 Parabéns!', 'Ganhaste 50 TeddyCoins!');
-      } catch (error) {
+        Alert.alert('Partida iniciada', 'A recompensa só será paga após validação segura do servidor.');
+      } catch {
         Alert.alert('Erro', 'Ocorreu um erro ao validar a tua pontuação. O Anti-Cheat pode ter bloqueado.');
       } finally {
         setClicks(0);
@@ -84,7 +84,7 @@ export default function GamesScreen({ userId = 'user1' }: Props) {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Teddy Clicker 🐻</Text>
-      <Text style={styles.subtitle}>Toca 10 vezes no botão para ganhares moedas!</Text>
+      <Text style={styles.subtitle}>Entrada: 5 TeddyCoins. Prêmio validado: 25 TeddyCoins.</Text>
 
       <TouchableOpacity 
         style={styles.gameButton} 

@@ -69,6 +69,7 @@ export async function transfer(
   userId: string,
   amount: number,
   machineId: string,
+  method: 'QR' | 'NFC' = 'QR',
 ): Promise<TransferResult> {
   const headers = {
     'Content-Type': 'application/json',
@@ -78,7 +79,7 @@ export async function transfer(
   const res = await fetch(`${API_BASE}/transfer`, {
     method: 'POST',
     headers: headers as HeadersInit,
-    body: JSON.stringify({ amount, machine_id: machineId }),
+    body: JSON.stringify({ amount, machine_id: machineId, channel: method }),
   });
 
   const body = await parseJsonSafe(res);
