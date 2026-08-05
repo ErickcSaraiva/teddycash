@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import { prisma } from './config/prisma';
+import bcrypt from 'bcryptjs';
 
 async function main() {
   console.log("Connecting to PostgreSQL...");
@@ -11,7 +12,7 @@ async function main() {
     create: {
       username: 'erick_crane_master',
       email: 'erick@catchup.com',
-      password: 'demo-password',
+      password: await bcrypt.hash(process.env.DEMO_PASSWORD ?? 'demo-password', 12),
       balance: 150,
     },
   });

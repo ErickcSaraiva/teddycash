@@ -1,10 +1,28 @@
 import React from 'react';
+import { Text } from 'react-native';
 import { Tabs } from 'expo-router';
 
 import { HapticTab } from '../../components/haptic-tab';
-import { IconSymbol } from '../../components/ui/icon-symbol';
 import { Colors } from '../../constants/theme';
 import { useColorScheme } from '../../hooks/use-color-scheme';
+
+type TabEmojiProps = {
+  emoji: string;
+  focused: boolean;
+};
+
+function TabEmoji({ emoji, focused }: TabEmojiProps) {
+  return (
+    <Text
+      style={{
+        fontSize: focused ? 24 : 22,
+        opacity: focused ? 1 : 0.45,
+      }}
+    >
+      {emoji}
+    </Text>
+  );
+}
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -20,10 +38,8 @@ export default function TabLayout() {
       <Tabs.Screen
         name="home"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="house.fill" color={color} />
-          ),
+          title: 'Início',
+          tabBarIcon: ({ focused }) => <TabEmoji emoji="🏠" focused={focused} />,
         }}
       />
 
@@ -31,9 +47,7 @@ export default function TabLayout() {
         name="games"
         options={{
           title: 'Jogos',
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="gamecontroller.fill" color={color} />
-          ),
+          tabBarIcon: ({ focused }) => <TabEmoji emoji="🎮" focused={focused} />,
         }}
       />
 
@@ -41,9 +55,7 @@ export default function TabLayout() {
         name="rewards"
         options={{
           title: 'Prêmios',
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="gift.fill" color={color} />
-          ),
+          tabBarIcon: ({ focused }) => <TabEmoji emoji="🎁" focused={focused} />,
         }}
       />
 
@@ -51,9 +63,7 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: 'Perfil',
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="person.fill" color={color} />
-          ),
+          tabBarIcon: ({ focused }) => <TabEmoji emoji="🧸" focused={focused} />,
         }}
       />
     </Tabs>

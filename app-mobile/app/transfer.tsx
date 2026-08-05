@@ -21,6 +21,7 @@ export default function TransferScreen() {
 
   const [machineId, setMachineId] = useState('');
   const [amount, setAmount] = useState('');
+  const [method, setMethod] = useState<'QR' | 'NFC'>('QR');
 
   const credits = Number(amount.replace(',', '.'));
   const validAmount = Number.isFinite(credits) && credits > 0;
@@ -35,6 +36,7 @@ export default function TransferScreen() {
       params: {
         machineId: machineId.trim(),
         amount: String(credits),
+        method,
       },
     });
   }
@@ -86,6 +88,33 @@ export default function TransferScreen() {
           style={[styles.input, { color: palette.text, backgroundColor: palette.card }]}
         />
 
+        <Text style={[styles.label, { color: palette.text }]}>Método de transferência</Text>
+        <View style={styles.methodRow}>
+          <Pressable
+            onPress={() => setMethod('QR')}
+            style={[
+              styles.methodButton,
+              {
+                backgroundColor: method === 'QR' ? palette.primary : palette.card,
+                marginRight: 10,
+              },
+            ]}
+          >
+            <Text style={[styles.methodText, { color: method === 'QR' ? '#fff' : palette.text }]}>QR Code</Text>
+          </Pressable>
+          <Pressable
+            onPress={() => setMethod('NFC')}
+            style={[
+              styles.methodButton,
+              {
+                backgroundColor: method === 'NFC' ? palette.primary : palette.card,
+              },
+            ]}
+          >
+            <Text style={[styles.methodText, { color: method === 'NFC' ? '#fff' : palette.text }]}>NFC</Text>
+          </Pressable>
+        </View>
+
         <Pressable
           disabled={!machineId.trim() || !validAmount || !balanceKnown || !allowed}
           onPress={goToConfirmation}
@@ -120,6 +149,22 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     fontSize: 16,
     marginBottom: 20,
+  },
+  methodRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  methodButton: {
+    flex: 1,
+    borderRadius: 14,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  methodText: {
+    fontSize: 16,
+    fontWeight: '700',
   },
   button: {
     alignItems: 'center',

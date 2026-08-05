@@ -1,9 +1,9 @@
 import { Router } from 'express';
-import { rewardGame, startGame } from '../controllers/gameController';
+import { startGame } from '../controllers/gameController';
+import { verifyToken } from '../middlewares/authMiddleware';
 
 const router = Router();
 
-router.post('/start', startGame);
-router.post('/reward', rewardGame);
+router.post('/:gameId/start', verifyToken, startGame);
 
 export default router;

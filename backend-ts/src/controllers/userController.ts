@@ -10,9 +10,9 @@ export const addCredit = async (req: AuthRequest, res: Response) => {
     const userId = req.userId;
     const { amount } = req.body;
 
-    if (!userId || typeof amount !== 'number' || amount <= 0) {
+    if (!userId || !Number.isInteger(amount) || amount <= 0) {
       return res.status(400).json({
-        error: "Payload inválido. Envia um 'amount' numérico positivo." 
+        error: "Payload inválido. Envie um 'amount' inteiro positivo."
       });
     }
 
@@ -44,15 +44,6 @@ export const addCredit = async (req: AuthRequest, res: Response) => {
           userId,
           amount,
           type: "PIX_CREDIT"
-        }
-      });
-
-      // Cria o registo de extrato para o bónus de cashback ganho
-      await tx.transaction.create({
-        data: {
-          userId,
-          amount: cashbackEarned,
-          type: "CASHBACK_BONUS"
         }
       });
 
