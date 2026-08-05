@@ -30,6 +30,9 @@ Crie ou mantenha `backend-ts/.env` com:
 ```bash
 DATABASE_URL="postgresql://usuario:senha@localhost:5432/catchup"
 GAME_SECRET="troque-este-segredo"
+JWT_SECRET="troque-este-segredo"
+DEMO_PASSWORD="senha-local-opcional"
+DEMO_MACHINE_API_KEY="chave-local-opcional"
 PORT=8000
 ```
 
@@ -38,8 +41,9 @@ PORT=8000
 - `GET /health`
 - `POST /auth/login`
 - `GET /balance/:userId`
-- `POST /transfer`
 - `GET /transactions/:userId`
+- `POST /machine-authorizations`
+- `POST /machine-authorizations/redeem`
 - `POST /users/credit`
 - `POST /games/start`
 - `POST /games/reward`
@@ -59,9 +63,20 @@ curl http://localhost:8000/balance/user1
 ```
 
 ```bash
-curl -X POST http://localhost:8000/transfer \
+curl -X POST http://localhost:8000/machine-authorizations \
+  -H "Authorization: Bearer TOKEN_DO_USUARIO" \
   -H "Content-Type: application/json" \
-  -d '{"user_id":"user1","amount":100,"machine_id":"machine-1"}'
+  -d '{"amount":2,"machine_id":"machine-1","channel":"QR"}'
+```
+
+O resgate e autenticado pela propria maquina. O ID vem do cabecalho e nao do corpo:
+
+```bash
+curl -X POST http://localhost:8000/machine-authorizations/redeem \
+  -H "Authorization: Bearer CHAVE_DA_MAQUINA" \
+  -H "X-Machine-Id: machine-1" \
+  -H "Content-Type: application/json" \
+  -d '{"authorization_token":"TOKEN_DA_AUTORIZACAO"}'
 ```
 
 ```bash
@@ -74,4 +89,5 @@ curl -X POST http://localhost:8000/users/credit \
 
 - O TypeScript compila para `dist`, mantendo `src` sem arquivos gerados.
 - O backend depende de PostgreSQL acessivel pela `DATABASE_URL`.
-- `POST /auth/login` cria/garante o usuario demo `user1` para facilitar testes locais do app mobile.
+- Execute `npm exec prisma db seed` explicitamente para criar o usuario e a maquina demo fora de producao.
+- Armazene somente o SHA-256 da chave de cada maquina em `Machine.apiKeyHash`; a chave em texto puro fica no dispositivo.

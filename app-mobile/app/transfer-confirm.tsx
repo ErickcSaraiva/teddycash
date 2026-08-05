@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTheme } from '@/src/contexts/ThemeContext';
 import { getPalette } from '@/src/theme/palettes';
 import { useAuth } from '@/src/hooks/useAuth';
-import { transfer } from '@/src/services/accountApi';
+import { createMachineAuthorization } from '@/src/services/accountApi';
 
 export default function TransferConfirmScreen() {
   const router = useRouter();
@@ -16,11 +16,12 @@ export default function TransferConfirmScreen() {
 
   const { theme } = useTheme();
   const palette = getPalette(theme);
-  const { userId, refreshBalance } = useAuth();
+  const { userId } = useAuth();
   const { balance } = useAuth();
 
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [authorizationPayload, setAuthorizationPayload] = useState('');
   const [error, setError] = useState('');
 
   const credits = Number(amount);
@@ -46,23 +47,18 @@ export default function TransferConfirmScreen() {
     setError('');
 
     try {
-      const result = await transfer(userId, credits, machineId, method === 'NFC' ? 'NFC' : 'QR');
+      const result = await createMachineAuthorization(userId, credits, machineId, method === 'NFC' ? 'NFC' : 'QR');
 
       if (result.status === 'insufficient') {
         setError(`Saldo insuficiente. Saldo atual: ${result.balance} créditos.`);
         return;
       }
 
-      if (result.status !== 'ok') {
+      if (result.status !== 'pending') {
         setError('Não foi possível concluir a transferência. Tente novamente.');
         return;
       }
-      // Preferir atualizar o contexto com o saldo retornado pelo backend
-      if ((result as any).balance !== undefined) {
-        await refreshBalance();
-      } else {
-        await refreshBalance();
-      }
+      setAuthorizationPayload(result.machinePayload);
       setSuccess(true);
     } catch {
       setError('Não foi possível conectar ao servidor.');
@@ -76,9 +72,12 @@ export default function TransferConfirmScreen() {
       <View style={[styles.container, { backgroundColor: palette.background }]}>
         <View style={styles.content}>
           <Text style={styles.successEmoji}>🧸</Text>
-          <Text style={[styles.title, { color: palette.text }]}>Transferência concluída!</Text>
+          <Text style={[styles.title, { color: palette.text }]}>Autorização criada!</Text>
           <Text style={[styles.message, { color: palette.softText }]}>
-            {credits} créditos foram enviados para a máquina {machineId}.
+            Apresente esta autorização à máquina {machineId}. O saldo só será debitado depois da leitura.
+          </Text>
+          <Text selectable style={[styles.payload, { color: palette.text, backgroundColor: palette.card }]}>
+            {authorizationPayload}
           </Text>
 
           <Pressable
@@ -115,8 +114,9 @@ export default function TransferConfirmScreen() {
           <Text style={[styles.summaryValue, { color: palette.primary }]}>
             {credits} créditos
           </Text>
-          <Text style={[styles.summaryLabel, { color: palette.softText }]}>Método</Text>\
-          <Text style={[styles.summaryValue, { color: palette.text }]}>{selectedMethod}</Text>\        </View>
+          <Text style={[styles.summaryLabel, { color: palette.softText }]}>Método</Text>
+          <Text style={[styles.summaryValue, { color: palette.text }]}>{selectedMethod}</Text>
+        </View>
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
 
@@ -126,7 +126,7 @@ export default function TransferConfirmScreen() {
           onPress={confirmTransfer}
         >
           <Text style={styles.buttonText}>
-            {loading ? 'Transferindo...' : 'Confirmar transferência'}
+            {loading ? 'Criando autorização...' : 'Criar autorização'}
           </Text>
         </Pressable>
       </View>
@@ -152,5 +152,6 @@ const styles = StyleSheet.create({
   buttonText: { color: '#FFFFFF', fontSize: 16, fontWeight: '800' },
   successEmoji: { fontSize: 54, textAlign: 'center', marginBottom: 18 },
   message: { fontSize: 16, lineHeight: 24, textAlign: 'center' },
+  payload: { fontSize: 12, marginTop: 20, padding: 12, borderRadius: 10 },
   historyLink: { fontSize: 16, fontWeight: '700', textAlign: 'center', marginTop: 22 },
 });

@@ -15,10 +15,10 @@ export const processCreditPurchase = async (req: AuthRequest, res: Response) => 
     return res.status(401).json({ success: false, message: 'Usuário não autenticado.' });
   }
 
-  if (typeof amount !== 'number' || amount <= 0) {
+  if (!Number.isInteger(amount) || amount <= 0) {
     return res.status(400).json({
       success: false,
-      message: 'É necessário informar um valor (amount) numérico e positivo.'
+      message: 'É necessário informar um amount inteiro e positivo.'
     });
   }
 

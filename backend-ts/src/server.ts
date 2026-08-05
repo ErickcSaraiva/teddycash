@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import cors from 'cors';
-import express from 'express';
+import express, { type NextFunction, type Request, type Response } from 'express';
 import accountRoutes from './routes/account';
 import authRoutes from './routes/auth';
 import creditRoutes from './routes/credit';
@@ -27,7 +27,13 @@ app.use(profileRoutes);
 app.use(economyRoutes);
 app.use('/games', gameRoutes);
 app.use((_req, res) => {
-  return res.status(404).json({ error: 'Route not found.' });
+  return res.status(404).json({ error: { code: 'ROUTE_NOT_FOUND', message: 'Rota nao encontrada.' } });
+});
+app.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
+  console.error('Unhandled request error:', error);
+  return res.status(500).json({
+    error: { code: 'INTERNAL_SERVER_ERROR', message: 'Erro interno do servidor.' },
+  });
 });
 
 const server = app.listen(port, '0.0.0.0', () => {

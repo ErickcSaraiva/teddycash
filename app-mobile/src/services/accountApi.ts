@@ -4,8 +4,8 @@ import * as SecureStore from 'expo-secure-store';
 // (src/controllers/accountController.ts), não ao mock antigo.
 //
 // GET /balance/:userId       -> { user_id, balance, cashback }
-// GET /transactions/:userId  -> [{ id, user_id, amount, machine_id, type, created_at }]
-// POST /transfer             -> { status, tx, balance } | { error, balance? }
+// GET /transactions/:userId  -> { items, pagination }
+// POST /machine-authorizations -> autorizacao pendente para QR/NFC
 
 // Se estiver testando em dispositivo físico, troque pelo IP da sua
 // máquina na rede local (ex: 'http://192.168.101.13:8000'), igual
@@ -23,13 +23,16 @@ export type TransactionResponse = {
   id: string;
   user_id: string;
   amount: number;
+  absolute_amount: number;
+  direction: 'CREDIT' | 'DEBIT';
   machine_id: string | null;
+  channel: 'QR' | 'NFC' | null;
   type: string;
   created_at: string;
 };
 
-export type TransferResult =
-  | { status: 'ok'; tx: TransactionResponse; balance: number }
+export type AuthorizationResult =
+  | { status: 'pending'; authorizationToken: string; machinePayload: string; expiresAt: string }
   | { status: 'insufficient'; balance: number }
   | { status: 'not_found' }
   | { status: 'error' };
@@ -62,21 +65,22 @@ export async function getTransactions(userId: string): Promise<TransactionRespon
   if (!res.ok) {
     throw new Error(`Falha ao buscar transações (HTTP ${res.status})`);
   }
-  return res.json();
+  const body = await res.json();
+  return body.items;
 }
 
-export async function transfer(
-  userId: string,
+export async function createMachineAuthorization(
+  _userId: string,
   amount: number,
   machineId: string,
   method: 'QR' | 'NFC' = 'QR',
-): Promise<TransferResult> {
+): Promise<AuthorizationResult> {
   const headers = {
     'Content-Type': 'application/json',
     ...(await getAuthHeaders()),
   } as Record<string, string>;
 
-  const res = await fetch(`${API_BASE}/transfer`, {
+  const res = await fetch(`${API_BASE}/machine-authorizations`, {
     method: 'POST',
     headers: headers as HeadersInit,
     body: JSON.stringify({ amount, machine_id: machineId, channel: method }),
@@ -84,10 +88,15 @@ export async function transfer(
 
   const body = await parseJsonSafe(res);
 
-  if (res.status === 200 && body?.status === 'ok') {
-    return { status: 'ok', tx: body.tx, balance: body.balance };
+  if (res.status === 201 && body?.status === 'pending') {
+    return {
+      status: 'pending',
+      authorizationToken: body.authorization_token,
+      machinePayload: body.machine_payload,
+      expiresAt: body.expires_at,
+    };
   }
-  if (res.status === 409) {
+  if (res.status === 409 && body?.error?.code === 'INSUFFICIENT_BALANCE') {
     return { status: 'insufficient', balance: body?.balance ?? 0 };
   }
   if (res.status === 404) {
