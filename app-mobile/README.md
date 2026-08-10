@@ -1,50 +1,56 @@
-# Welcome to your Expo app 👋
+# Teddycash Mobile
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Aplicativo Expo SDK 54. O leitor usa `CameraView`, `useCameraPermissions`,
+`barcodeScannerSettings={{ barcodeTypes: ['qr'] }}` e `onBarcodeScanned`, conforme a
+[documentação oficial do expo-camera para SDK 54](https://docs.expo.dev/versions/v54.0.0/sdk/camera/).
+O módulo faz parte do Expo Go nessa versão.
 
-## Get started
-
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Preparação
 
 ```bash
-npm run reset-project
+cd app-mobile
+npm install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Crie `.env.local` (use o IP da máquina de desenvolvimento ao testar em celular):
 
-## Learn more
+```bash
+EXPO_PUBLIC_API_BASE_URL=http://SEU_IP_LOCAL:8000
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+Inicie com `npx expo start` e leia o QR do terminal pelo Expo Go. O QR da máquina
+pode conter apenas `machine-1` ou JSON no formato `{"machine_id":"machine-1"}`.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## Roteiro de teste da autorização
 
-## Join the community
+1. Inicie o PostgreSQL e o backend, aplique as migrations e execute o seed de demonstração.
+2. Entre no app e abra **Transferir para máquina**.
+3. Selecione **QR Code**, toque em **Ler QR Code da máquina**, conceda acesso à câmera e leia o QR. Para NFC, selecione **NFC** e informe o identificador.
+4. Informe de 1 a 10 créditos e crie a autorização. Confirme que o saldo ainda não mudou e que a validade exibida é de dois minutos.
+5. Em desenvolvimento, toque em **Simular confirmação do ESP32 (dev)**. Esse controle é protegido por `__DEV__` e não entra na interface de produção.
+6. Confirme a mensagem de sucesso, o novo saldo na Home e o débito `MACHINE_UNLOCK` no histórico.
+7. Tente resgatar o mesmo token novamente com o `curl` do README do backend; a API deve responder `409 AUTHORIZATION_UNAVAILABLE`.
+8. Crie outra autorização e aguarde mais de dois minutos; o resgate deve falhar sem débito.
+9. Saia da conta, encerre o app e abra-o novamente; token, usuário e saldos em cache não devem reaparecer.
 
-Join our community of developers creating universal apps.
+## Validações
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```bash
+npx tsc --noEmit
+npm run lint
+npx expo config --type public
+```
+
+## Web e Vercel
+
+O export estático é gerado em `dist`:
+
+```bash
+npm run typecheck
+npm run build:web
+```
+
+Na Vercel, crie um projeto com **Root Directory** `app-mobile`, cadastre
+`EXPO_PUBLIC_API_BASE_URL` com a URL HTTPS do backend e publique primeiro como Preview.
+O token e os dados de sessão usam `SecureStore` no Android/iOS e `localStorage` na web.
+NFC não está disponível no navegador; o fluxo QR continua acessível.

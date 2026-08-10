@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "prisma:generate": "prisma generate",
+    "db:deploy": "prisma migrate deploy",
     "postinstall": "prisma generate",
     "build": "tsc -p .",
     "start": "node dist/server.js",
@@ -14,6 +15,7 @@
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",
+    "@prisma/client": "^7.8.0",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
     "express": "^5.2.1",
@@ -23,7 +25,6 @@
     "uuid": "^9.0.0"
   },
   "devDependencies": {
-    "@prisma/client": "^7.8.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",

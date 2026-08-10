@@ -52,7 +52,7 @@ export default function AddCreditsScreen() {
 
     try {
       const response = await createPixPaymentOrder(selectedPackage.code);
-      router.push(`/payment-order/${response.order.id}` as any);
+      router.push({ pathname: '/payment-order', params: { id: response.order.id } } as any);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Não foi possível criar o pedido.');
     } finally {

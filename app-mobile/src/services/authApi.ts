@@ -1,8 +1,7 @@
 // app-mobile/src/services/authApi.ts
-import * as SecureStore from 'expo-secure-store';
+import { API_BASE_URL, API_UNAVAILABLE_MESSAGE } from '../config/api';
+import { sessionStorage } from './sessionStorage';
 
-const API_BASE =
-  process.env.EXPO_PUBLIC_API_BASE ?? 'http://192.168.101.13:8000';
 const KEY_TOKEN = 'teddycash_token';
 const KEY_USER_ID = 'teddycash_user_id';
 
@@ -40,11 +39,11 @@ async function post<T>(path: string, body?: object, token?: string): Promise<T> 
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
-  const res = await fetch(`${API_BASE}${path}`, {
+  const res = await fetch(`${API_BASE_URL}${path}`, {
     method: 'POST',
     headers,
     body: body ? JSON.stringify(body) : undefined,
-  });
+  }).catch(() => { throw new Error(API_UNAVAILABLE_MESSAGE); });
 
   if (!res.ok) {
     const detail = await res.json().catch(() => ({}));
@@ -57,7 +56,7 @@ async function get<T>(path: string, token?: string): Promise<T> {
   const headers: Record<string, string> = {};
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
-  const res = await fetch(`${API_BASE}${path}`, { headers });
+  const res = await fetch(`${API_BASE_URL}${path}`, { headers }).catch(() => { throw new Error(API_UNAVAILABLE_MESSAGE); });
 
   if (!res.ok) {
     const detail = await res.json().catch(() => ({}));
@@ -70,11 +69,11 @@ async function patch<T>(path: string, body?: object, token?: string): Promise<T>
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
-  const res = await fetch(`${API_BASE}${path}`, {
+  const res = await fetch(`${API_BASE_URL}${path}`, {
     method: 'PATCH',
     headers,
     body: body ? JSON.stringify(body) : undefined,
-  });
+  }).catch(() => { throw new Error(API_UNAVAILABLE_MESSAGE); });
 
   if (!res.ok) {
     const detail = await res.json().catch(() => ({}));
@@ -106,8 +105,8 @@ export const authApi = {
       throw new Error('Resposta inválida do backend no login.');
     }
 
-    await SecureStore.setItemAsync(KEY_TOKEN, token);
-    await SecureStore.setItemAsync(KEY_USER_ID, userId);
+    await sessionStorage.setItem(KEY_TOKEN, token);
+    await sessionStorage.setItem(KEY_USER_ID, userId);
 
     return { ...data, token, userId };
   },
@@ -125,15 +124,15 @@ export const authApi = {
    * GET token salvo localmente
    */
   getToken: async (): Promise<string | null> => {
-    return await SecureStore.getItemAsync(KEY_TOKEN);
+    return await sessionStorage.getItem(KEY_TOKEN);
   },
 
   /**
    * Remove o token para deslogar
    */
   logout: async (): Promise<void> => {
-    await SecureStore.deleteItemAsync(KEY_TOKEN);
-    await SecureStore.deleteItemAsync(KEY_USER_ID);
+    await sessionStorage.removeItem(KEY_TOKEN);
+    await sessionStorage.removeItem(KEY_USER_ID);
   },
 
   /**

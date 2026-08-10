@@ -1,24 +1,29 @@
 import axios from 'axios';
-import * as SecureStore from 'expo-secure-store';
+import { API_BASE_URL, API_UNAVAILABLE_MESSAGE } from '../config/api';
+import { sessionStorage } from './sessionStorage';
 
-const API_BASE = process.env.EXPO_PUBLIC_API_BASE ?? 'http://192.168.101.13:8000';
 const TOKEN_KEY = 'teddycash_token';
 
 const api = axios.create({
-  baseURL: API_BASE,
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
 api.interceptors.request.use(async (config) => {
-  const token = await SecureStore.getItemAsync(TOKEN_KEY);
+  const token = await sessionStorage.getItem(TOKEN_KEY);
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
 
   return config;
+});
+
+api.interceptors.response.use(undefined, (error) => {
+  if (!error.response) error.message = API_UNAVAILABLE_MESSAGE;
+  return Promise.reject(error);
 });
 
 export default api;

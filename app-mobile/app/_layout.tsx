@@ -1,5 +1,6 @@
 // app-mobile/app/_layout.tsx
 import { useEffect } from 'react';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { DarkTheme, DefaultTheme, ThemeProvider as NavigationThemeProvider } from '@react-navigation/native';
 import { Slot, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -34,11 +35,16 @@ if (token && isAuthRoute) {
   }, [token, loading, segments, router]);
 
   if (loading) {
-    return null;
+    return <View style={styles.loading}><ActivityIndicator size="large" color="#7C5CFC" /><Text style={styles.loadingText}>Carregando sua sessão...</Text></View>;
   }
 
   return <Slot />;
 }
+
+const styles = StyleSheet.create({
+  loading: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#0F1113', gap: 16 },
+  loadingText: { color: '#F0F2F5', fontSize: 16 },
+});
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();

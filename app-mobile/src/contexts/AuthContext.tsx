@@ -1,7 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
-import * as SecureStore from 'expo-secure-store';
 import { authApi } from '../services/authApi';
 import { getWallet, type Wallet } from '../services/economyApi';
+import { sessionStorage } from '../services/sessionStorage';
 
 const KEY_TOKEN = 'teddycash_token';
 const KEY_USER_ID = 'teddycash_user_id';
@@ -21,6 +21,11 @@ interface AuthContextValue extends AuthState {
 }
 const initialState: AuthState = { token: null, userId: null, username: null, email: null, avatarUrl: null, balance: null, teddyCoins: null, loading: true, refreshing: false };
 const AuthContext = createContext<AuthContextValue | null>(null);
+const SESSION_KEYS = [KEY_TOKEN, KEY_USER_ID, KEY_BALANCE, KEY_TEDDY_COINS] as const;
+
+async function clearStoredSession() {
+  await Promise.all(SESSION_KEYS.map((key) => sessionStorage.removeItem(key)));
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState(initialState);
@@ -29,8 +34,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const persistWallet = useCallback(async (wallet: Wallet) => {
     await Promise.all([
-      SecureStore.setItemAsync(KEY_BALANCE, String(wallet.credits)),
-      SecureStore.setItemAsync(KEY_TEDDY_COINS, String(wallet.teddy_coins)),
+      sessionStorage.setItem(KEY_BALANCE, String(wallet.credits)),
+      sessionStorage.setItem(KEY_TEDDY_COINS, String(wallet.teddy_coins)),
     ]).catch(() => {});
   }, []);
 
@@ -38,8 +43,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     void (async () => {
       try {
         const [token, userId, cachedCredits, cachedCoins] = await Promise.all([
-          SecureStore.getItemAsync(KEY_TOKEN), SecureStore.getItemAsync(KEY_USER_ID),
-          SecureStore.getItemAsync(KEY_BALANCE), SecureStore.getItemAsync(KEY_TEDDY_COINS),
+          sessionStorage.getItem(KEY_TOKEN), sessionStorage.getItem(KEY_USER_ID),
+          sessionStorage.getItem(KEY_BALANCE), sessionStorage.getItem(KEY_TEDDY_COINS),
         ]);
         if (!token || !userId) { if (mounted.current) setState({ ...initialState, loading: false }); return; }
         if (mounted.current) setState((s) => ({ ...s, token, userId, balance: cachedCredits ? Number(cachedCredits) : null, teddyCoins: cachedCoins ? Number(cachedCoins) : null }));
@@ -47,8 +52,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (mounted.current) setState({ token, userId, username: profile.username, email: profile.email, avatarUrl: profile.avatarUrl ?? null, balance: wallet.credits, teddyCoins: wallet.teddy_coins, loading: false, refreshing: false });
         await persistWallet(wallet);
       } catch {
-        await Promise.all([SecureStore.deleteItemAsync(KEY_TOKEN), SecureStore.deleteItemAsync(KEY_USER_ID)]).catch(() => {});
-        if (mounted.current) setState({ ...initialState, loading: false });
+        // Uma API temporariamente indisponível não invalida credenciais locais.
+        if (mounted.current) setState((current) => ({ ...current, loading: false, refreshing: false }));
       }
     })();
   }, [persistWallet]);
@@ -62,7 +67,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [persistWallet]);
 
   const logout = useCallback(async () => {
-    await Promise.all([SecureStore.deleteItemAsync(KEY_TOKEN), SecureStore.deleteItemAsync(KEY_USER_ID), SecureStore.deleteItemAsync(KEY_BALANCE), SecureStore.deleteItemAsync(KEY_TEDDY_COINS)]).catch(() => {});
+    await clearStoredSession().catch(() => {});
     if (mounted.current) setState({ ...initialState, loading: false });
   }, []);
 

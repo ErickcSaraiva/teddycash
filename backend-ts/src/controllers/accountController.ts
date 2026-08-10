@@ -154,6 +154,33 @@ export const createMachineAuthorization = async (req: AuthRequest, res: Response
   });
 };
 
+export const getMachineAuthorization = async (req: AuthRequest, res: Response) => {
+  const authorizationId = getParamValue(req.params.authorizationId);
+  if (!authorizationId || !req.userId) {
+    return apiError(res, 400, 'AUTHORIZATION_ID_REQUIRED', 'authorizationId e obrigatorio.');
+  }
+
+  const authorization = await prisma.machineAuthorization.findFirst({
+    where: { id: authorizationId, userId: req.userId },
+  });
+  if (!authorization) {
+    return apiError(res, 404, 'AUTHORIZATION_NOT_FOUND', 'Autorizacao nao encontrada.');
+  }
+
+  const status = authorization.status === 'PENDING' && authorization.expiresAt <= new Date()
+    ? 'EXPIRED'
+    : authorization.status;
+  return res.json({
+    authorization_id: authorization.id,
+    status: status.toLowerCase(),
+    machine_id: authorization.machineId,
+    amount: authorization.amount,
+    channel: authorization.channel,
+    expires_at: authorization.expiresAt,
+    consumed_at: authorization.usedAt,
+  });
+};
+
 export const redeemMachineAuthorization = async (req: MachineRequest, res: Response) => {
   const token = String(req.body.authorization_token ?? req.body.token ?? '').trim();
   const machineId = req.authenticatedMachineId;
