@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { API_BASE_URL } from '../config/api';
 
 // Aqui definimos a estrutura do teu Live-Ops, agora com o estado de 'loading'
 type ThemeContextData = {
@@ -22,7 +23,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     // O FUTURO É AGORA: Fazendo a chamada real ao teu Backend Node.js!
     // NOTA: Se fores testar no telemóvel físico, troca 'localhost' pelo IP do teu computador.
-    fetch('http://192.168.101.13:8000/settings/current-theme')
+    fetch(`${API_BASE_URL}/settings/current-theme`)
       .then(response => response.json())
       .then(data => {
         if (data.success) {

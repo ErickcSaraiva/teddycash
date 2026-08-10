@@ -1,6 +1,6 @@
-import * as SecureStore from 'expo-secure-store';
+import { API_BASE_URL, API_UNAVAILABLE_MESSAGE } from '../config/api';
+import { sessionStorage } from './sessionStorage';
 
-const API_BASE = process.env.EXPO_PUBLIC_API_BASE ?? 'http://192.168.101.13:8000';
 const TOKEN_KEY = 'teddycash_token';
 
 export type CreditPackageResponse = {
@@ -32,7 +32,7 @@ export type CreatePaymentOrderResponse = {
 };
 
 async function getAuthHeaders() {
-  const token = await SecureStore.getItemAsync(TOKEN_KEY);
+  const token = await sessionStorage.getItem(TOKEN_KEY);
   return token ? { Authorization: `Bearer ${token}` } : {} as Record<string, string>;
 }
 
@@ -46,9 +46,9 @@ async function parseJson(res: Response) {
 
 export async function fetchCreditPackages(): Promise<{ packages: CreditPackageResponse[] }> {
   const headers = await getAuthHeaders();
-  const res = await fetch(`${API_BASE}/credit-packages`, {
+  const res = await fetch(`${API_BASE_URL}/credit-packages`, {
     headers: { 'Content-Type': 'application/json', ...headers },
-  });
+  }).catch(() => { throw new Error(API_UNAVAILABLE_MESSAGE); });
 
   if (!res.ok) {
     const body = await parseJson(res);
@@ -62,14 +62,14 @@ export async function createPixPaymentOrder(
   packageCode: string,
 ): Promise<CreatePaymentOrderResponse> {
   const headers = await getAuthHeaders();
-  const res = await fetch(`${API_BASE}/payment-orders/pix`, {
+  const res = await fetch(`${API_BASE_URL}/payment-orders/pix`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       ...headers,
     },
     body: JSON.stringify({ package_code: packageCode }),
-  });
+  }).catch(() => { throw new Error(API_UNAVAILABLE_MESSAGE); });
 
   if (!res.ok) {
     const body = await parseJson(res);
@@ -81,9 +81,9 @@ export async function createPixPaymentOrder(
 
 export async function fetchPaymentOrder(orderId: string): Promise<PaymentOrderResponse> {
   const headers = await getAuthHeaders();
-  const res = await fetch(`${API_BASE}/payment-orders/${orderId}`, {
+  const res = await fetch(`${API_BASE_URL}/payment-orders/${orderId}`, {
     headers: { 'Content-Type': 'application/json', ...headers },
-  });
+  }).catch(() => { throw new Error(API_UNAVAILABLE_MESSAGE); });
 
   if (!res.ok) {
     const body = await parseJson(res);
@@ -95,9 +95,9 @@ export async function fetchPaymentOrder(orderId: string): Promise<PaymentOrderRe
 
 export async function fetchPaymentOrders(): Promise<PaymentOrderResponse[]> {
   const headers = await getAuthHeaders();
-  const res = await fetch(`${API_BASE}/payment-orders`, {
+  const res = await fetch(`${API_BASE_URL}/payment-orders`, {
     headers: { 'Content-Type': 'application/json', ...headers },
-  });
+  }).catch(() => { throw new Error(API_UNAVAILABLE_MESSAGE); });
 
   if (!res.ok) {
     const body = await parseJson(res);

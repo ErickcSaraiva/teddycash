@@ -1,5 +1,5 @@
-import * as SecureStore from 'expo-secure-store';
 import api from './api';
+import { sessionStorage } from './sessionStorage';
 
 const TOKEN_KEY = 'teddycash_token';
 const USER_ID_KEY = 'teddycash_user_id';
@@ -29,8 +29,8 @@ export const authService = {
       throw new Error('Resposta inválida do backend no login.');
     }
 
-    await SecureStore.setItemAsync(TOKEN_KEY, token);
-    await SecureStore.setItemAsync(USER_ID_KEY, userId);
+    await sessionStorage.setItem(TOKEN_KEY, token);
+    await sessionStorage.setItem(USER_ID_KEY, userId);
 
     return { ...response.data, token, userId };
   },
@@ -41,15 +41,15 @@ export const authService = {
   },
 
   async logout(): Promise<void> {
-    await SecureStore.deleteItemAsync(TOKEN_KEY);
-    await SecureStore.deleteItemAsync(USER_ID_KEY);
+    await sessionStorage.removeItem(TOKEN_KEY);
+    await sessionStorage.removeItem(USER_ID_KEY);
   },
 
   async getStoredToken(): Promise<string | null> {
-    return SecureStore.getItemAsync(TOKEN_KEY);
+    return sessionStorage.getItem(TOKEN_KEY);
   },
 
   async getStoredUserId(): Promise<string | null> {
-    return SecureStore.getItemAsync(USER_ID_KEY);
+    return sessionStorage.getItem(USER_ID_KEY);
   },
 };

@@ -4,7 +4,9 @@ Backend em Node.js, TypeScript, Express e Prisma para o projeto Teddycash.
 
 ## Estrutura
 
-- `src/server.ts` - entrada do servidor Express.
+- `src/app.ts` - criação e exportação do aplicativo Express.
+- `src/server.ts` - servidor HTTP usado apenas no desenvolvimento/local.
+- `api/index.ts` - entrada serverless da Vercel.
 - `src/config/prisma.ts` - cliente Prisma unico usado pela API.
 - `src/controllers/` - regras dos endpoints.
 - `src/routes/` - roteadores Express.
@@ -33,6 +35,7 @@ GAME_SECRET="troque-este-segredo"
 JWT_SECRET="troque-este-segredo"
 DEMO_PASSWORD="senha-local-opcional"
 DEMO_MACHINE_API_KEY="chave-local-opcional"
+FRONTEND_URL="http://localhost:8081"
 PORT=8000
 ```
 
@@ -43,6 +46,7 @@ PORT=8000
 - `GET /balance/:userId`
 - `GET /transactions/:userId`
 - `POST /machine-authorizations`
+- `GET /machine-authorizations/:authorizationId`
 - `POST /machine-authorizations/redeem`
 - `POST /users/credit`
 - `POST /games/start`
@@ -79,6 +83,10 @@ curl -X POST http://localhost:8000/machine-authorizations/redeem \
   -d '{"authorization_token":"TOKEN_DA_AUTORIZACAO"}'
 ```
 
+A autorizacao expira em dois minutos. Criar uma nova cancela a anterior do mesmo usuario;
+o resgate usa uma transacao atomica e cada token so pode ser consumido uma vez. Nenhum
+credito e debitado na criacao: saldo e historico mudam apenas quando a maquina confirma.
+
 ```bash
 curl -X POST http://localhost:8000/users/credit \
   -H "Content-Type: application/json" \
@@ -91,3 +99,19 @@ curl -X POST http://localhost:8000/users/credit \
 - O backend depende de PostgreSQL acessivel pela `DATABASE_URL`.
 - Execute `npm exec prisma db seed` explicitamente para criar o usuario e a maquina demo fora de producao.
 - Armazene somente o SHA-256 da chave de cada maquina em `Machine.apiKeyHash`; a chave em texto puro fica no dispositivo.
+
+## PostgreSQL e Vercel
+
+Crie um PostgreSQL gerenciado (Neon, Supabase ou equivalente), copie a connection
+string SSL para `DATABASE_URL` e, após revisar o status das migrations, execute uma vez:
+
+```bash
+npx prisma migrate status
+npm run db:deploy
+```
+
+Não use `migrate dev`, `db push` ou `migrate reset` em produção. Na Vercel, crie o
+projeto com **Root Directory** `backend-ts` e cadastre `DATABASE_URL`, `JWT_SECRET`,
+`GAME_SECRET` (quando usado), `FRONTEND_URL` e, se necessário, `ALLOWED_ORIGINS` e
+`REWARDS_TIME_ZONE`. `ALLOWED_ORIGINS` aceita URLs separadas por vírgula. Faça um
+Preview, valide `/health`, login e rotas autenticadas, e só então promova.
