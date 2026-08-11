@@ -9,7 +9,7 @@ export default function NotFoundScreen() {
         <Text style={styles.emoji}>🧸</Text>
         <Text style={styles.title}>Página não encontrada</Text>
         <Text style={styles.message}>Este endereço não existe ou não está mais disponível.</Text>
-        <Link href="/" style={styles.link}>Voltar ao TeddyCash</Link>
+        <Link href="/login" style={styles.link}>Voltar ao TeddyCash</Link>
       </View>
     </>
   );
