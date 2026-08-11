@@ -521,7 +521,7 @@ export default function LoginScreen({ onLoginSuccess }: { onLoginSuccess?: () =>
     setLoading(true);
     clearError();
     try {
-      // TODO: FirebaseAuth.confirmOTP(otp) → pegar token → authApi.login
+      // TODO: FirebaseAuth.confirmOTP(otp) → trocar pelo fluxo de sessão centralizado.
       await new Promise((r) => setTimeout(r, 1000)); // placeholder
       onLoginSuccess?.();
     } catch (e: any) {

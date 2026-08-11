@@ -149,7 +149,7 @@ export default function TransferConfirmScreen() {
 
           <Pressable
             style={[styles.button, { backgroundColor: palette.primary }]}
-            onPress={() => router.replace('/home')}
+            onPress={() => router.replace('/(tabs)/home')}
           >
             <Text style={styles.buttonText}>Voltar para Home</Text>
           </Pressable>

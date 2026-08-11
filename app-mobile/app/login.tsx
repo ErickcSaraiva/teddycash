@@ -15,7 +15,6 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/src/hooks/useAuth';
-import { authService } from '@/src/services/auth';
 
 const { height } = Dimensions.get('window');
 
@@ -160,6 +159,8 @@ type EmailViewProps = {
   error: string;
   email: string;
   password: string;
+  showPassword: boolean;
+  onToggleShowPassword: () => void;
   onChangeEmail: (v: string) => void;
   onChangePassword: (v: string) => void;
   onSubmit: () => void;
@@ -173,6 +174,8 @@ const EmailView = ({
   error,
   email,
   password,
+  showPassword,
+  onToggleShowPassword,
   onChangeEmail,
   onChangePassword,
   onSubmit,
@@ -216,16 +219,21 @@ const EmailView = ({
 
       <View style={[styles.inputGroup, { marginTop: 14 }]}>
         <Text style={styles.inputLabel}>Senha</Text>
-        <TextInput
-          style={styles.input}
-          value={password}
-          onChangeText={onChangePassword}
-          placeholder={isSignUp ? 'Mínimo 6 caracteres' : '••••••••'}
-          placeholderTextColor={C.textDim}
-          secureTextEntry
-          returnKeyType="done"
-          onSubmitEditing={onSubmit}
-        />
+        <View style={styles.passwordRow}>
+          <TextInput
+            style={[styles.input, styles.passwordInput]}
+            value={password}
+            onChangeText={onChangePassword}
+            placeholder={isSignUp ? 'Mínimo 6 caracteres' : '••••••••'}
+            placeholderTextColor={C.textDim}
+            secureTextEntry={!showPassword}
+            returnKeyType="done"
+            onSubmitEditing={onSubmit}
+          />
+          <Pressable style={styles.eyeButton} onPress={onToggleShowPassword} accessibilityLabel={showPassword ? 'Ocultar senha' : 'Mostrar senha'}>
+            <Text style={styles.eyeText}>{showPassword ? '🙈' : '👁️'}</Text>
+          </Pressable>
+        </View>
       </View>
 
       {!isSignUp && (
@@ -393,11 +401,12 @@ const PhoneView = ({
 );
 
 export default function LoginScreen() {
-  const { login } = useAuth();
+  const { login, register } = useAuth();
 
   const [currentView, setCurrentView] = useState<ViewName>('landing');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
@@ -406,6 +415,7 @@ export default function LoginScreen() {
   const [isSignUp, setIsSignUp] = useState(false);
 
   const glowAnim = useRef(new Animated.Value(0.6)).current;
+  const submitting = useRef(false);
 
   useEffect(() => {
     const animation = Animated.loop(
@@ -453,6 +463,7 @@ export default function LoginScreen() {
   }, [login, onLoginSuccess, clearError]);
 
   const handleEmailSubmit = useCallback(async () => {
+    if (submitting.current) return;
     if (!email.trim() || !password.trim()) {
       setError('Preencha e-mail e senha.');
       return;
@@ -468,6 +479,7 @@ export default function LoginScreen() {
       return;
     }
 
+    submitting.current = true;
     setLoading(true);
     clearError();
     try {
@@ -475,10 +487,10 @@ export default function LoginScreen() {
 
       if (isSignUp) {
         const generatedUsername = cleanEmail.split('@')[0];
-        await authService.register(generatedUsername, cleanEmail, password);
+        await register(generatedUsername, cleanEmail, password);
+      } else {
+        await login(cleanEmail, password);
       }
-
-      await login(cleanEmail, password);
       onLoginSuccess();
     } catch (e: any) {
       setError(
@@ -488,9 +500,10 @@ export default function LoginScreen() {
             : 'E-mail ou senha incorretos.')
       );
     } finally {
+      submitting.current = false;
       setLoading(false);
     }
-  }, [email, password, isSignUp, login, clearError, onLoginSuccess]);
+  }, [email, password, isSignUp, login, register, clearError, onLoginSuccess]);
 
   const handleSendOtp = useCallback(async () => {
     const digits = phone.replace(/\D/g, '');
@@ -623,6 +636,8 @@ export default function LoginScreen() {
               error={error}
               email={email}
               password={password}
+              showPassword={showPassword}
+              onToggleShowPassword={() => setShowPassword((value) => !value)}
               onChangeEmail={handleChangeEmail}
               onChangePassword={handleChangePassword}
               onSubmit={handleEmailSubmit}
@@ -826,6 +841,22 @@ const styles = StyleSheet.create({
     paddingVertical: 13,
     fontSize: 15,
     color: C.text,
+  },
+  passwordRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  passwordInput: {
+    flex: 1,
+  },
+  eyeButton: {
+    marginLeft: 10,
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: '#131618',
+  },
+  eyeText: {
+    fontSize: 18,
   },
 
   forgotLink: { alignSelf: 'flex-end', marginTop: 10, marginBottom: 4 },

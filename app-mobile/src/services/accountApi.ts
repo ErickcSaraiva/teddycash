@@ -8,7 +8,7 @@ import { sessionStorage } from './sessionStorage';
 // GET /transactions/:userId  -> { items, pagination }
 // POST /machine-authorizations -> autorizacao pendente para QR/NFC
 
-// Em dispositivo físico, configure EXPO_PUBLIC_API_BASE_URL no .env.local
+// Em dispositivo físico, configure EXPO_PUBLIC_API_BASE no .env.local
 // com o endereço acessível do computador na rede local.
 const TOKEN_KEY = 'teddycash_token';
 

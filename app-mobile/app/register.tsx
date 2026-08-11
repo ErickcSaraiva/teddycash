@@ -1,42 +1,50 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/src/contexts/ThemeContext';
 import { getPalette } from '@/src/theme/palettes';
 import { useAuth } from '@/src/hooks/useAuth';
-import { authService } from '@/src/services/auth';
-import login from './login';
 
 export default function RegisterScreen() {
   const router = useRouter();
   const { theme } = useTheme();
   const palette = getPalette(theme);
-  const { login } = useAuth();
+  const { register } = useAuth();
+  const submitting = useRef(false);
 
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleRegister = async () => {
+    if (submitting.current) return;
+    const cleanUsername = username.trim();
+    const cleanEmail = email.trim().toLowerCase();
     // Validação básica
-    if (!username || !email || !password) {
+    if (!cleanUsername || !cleanEmail || !password) {
       Alert.alert('Ops!', 'Por favor, preencha todos os campos.');
       return;
     }
+    if (cleanUsername.length < 3 || !/\S+@\S+\.\S+/.test(cleanEmail) || password.length < 6) {
+      Alert.alert('Ops!', 'Use um nome com 3 caracteres, e-mail válido e senha com pelo menos 6 caracteres.');
+      return;
+    }
 
+    submitting.current = true;
     setIsLoading(true);
 
     try {
-      await authService.register(username, email, password);
-      await login(email, password);
+      await register(cleanUsername, cleanEmail, password);
 
       Alert.alert('Sucesso!', 'A tua conta foi criada e você já está logado.');
-      router.replace('/home');
+      router.replace('/(tabs)/home');
 
     } catch (error: any) {
       Alert.alert('Erro', error.message);
     } finally {
+      submitting.current = false;
       setIsLoading(false);
     }
   };
@@ -63,14 +71,19 @@ export default function RegisterScreen() {
         keyboardType="email-address"
         autoCapitalize="none"
       />
-      <TextInput 
-        style={[styles.input, { backgroundColor: palette.card, color: palette.text }]}
-        placeholder="Senha"
-        secureTextEntry
-        placeholderTextColor={palette.softText}
-        value={password}
-        onChangeText={setPassword}
-      />
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <TextInput
+          style={[styles.input, { backgroundColor: palette.card, color: palette.text, flex: 1 }]}
+          placeholder="Senha"
+          secureTextEntry={!showPassword}
+          placeholderTextColor={palette.softText}
+          value={password}
+          onChangeText={setPassword}
+        />
+        <Pressable onPress={() => setShowPassword((value) => !value)} style={{ marginLeft: 10, padding: 12, borderRadius: 12, backgroundColor: '#131618' }}>
+          <Text style={{ color: palette.text }}>{showPassword ? '🙈' : '👁️'}</Text>
+        </Pressable>
+      </View>
 
       <TouchableOpacity 
         style={[styles.button, { backgroundColor: palette.primary, opacity: isLoading ? 0.7 : 1 }]}

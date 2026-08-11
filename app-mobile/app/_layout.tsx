@@ -14,13 +14,17 @@ function AppNavigator() {
   const segments = useSegments();
   const router = useRouter();
 
-  useEffect(() => {const isAuthRoute = segments[0] === 'login' || segments[0] === 'register';
+  useEffect(() => {
+    if (loading) return;
+    const isAuthRoute = segments[0] === 'login' || segments[0] === 'register';
 
 const isProtectedRoute =
   segments[0] === '(tabs)' ||
   segments[0] === 'transfer' ||
   segments[0] === 'transfer-confirm' ||
-  segments[0] === 'transactions';
+  segments[0] === 'transactions' ||
+  segments[0] === 'add-credits' ||
+  segments[0] === 'payment-order';
 
 if (!token && isProtectedRoute) {
   router.replace('/login');
@@ -28,7 +32,7 @@ if (!token && isProtectedRoute) {
 }
 
 if (token && isAuthRoute) {
-  router.replace('/home');
+  router.replace('/(tabs)/home');
   return;
 }
 

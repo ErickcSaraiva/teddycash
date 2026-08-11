@@ -15,7 +15,7 @@ npm install
 Crie `.env.local` (use o IP da máquina de desenvolvimento ao testar em celular):
 
 ```bash
-EXPO_PUBLIC_API_BASE_URL=http://SEU_IP_LOCAL:8000
+EXPO_PUBLIC_API_BASE=http://SEU_IP_LOCAL:8000
 ```
 
 Inicie com `npx expo start` e leia o QR do terminal pelo Expo Go. O QR da máquina
@@ -51,6 +51,6 @@ npm run build:web
 ```
 
 Na Vercel, crie um projeto com **Root Directory** `app-mobile`, cadastre
-`EXPO_PUBLIC_API_BASE_URL` com a URL HTTPS do backend e publique primeiro como Preview.
+`EXPO_PUBLIC_API_BASE` com a URL HTTPS do backend e publique primeiro como Preview.
 O token e os dados de sessão usam `SecureStore` no Android/iOS e `localStorage` na web.
 NFC não está disponível no navegador; o fluxo QR continua acessível.
