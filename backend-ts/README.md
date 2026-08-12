@@ -48,9 +48,11 @@ PORT=8000
 - `POST /machine-authorizations`
 - `GET /machine-authorizations/:authorizationId`
 - `POST /machine-authorizations/redeem`
-- `POST /users/credit`
-- `POST /games/start`
-- `POST /games/reward`
+- `GET /wallet`
+- `GET /games`
+- `GET /games/history`
+- `POST /games/:gameId/start`
+- `POST /games/:gameId/complete`
 
 ## Exemplos
 
@@ -63,7 +65,8 @@ curl -X POST http://localhost:8000/auth/login
 ```
 
 ```bash
-curl http://localhost:8000/balance/user1
+curl http://localhost:8000/wallet \
+  -H "Authorization: Bearer TOKEN_DO_USUARIO"
 ```
 
 ```bash
@@ -87,11 +90,7 @@ A autorizacao expira em dois minutos. Criar uma nova cancela a anterior do mesmo
 o resgate usa uma transacao atomica e cada token so pode ser consumido uma vez. Nenhum
 credito e debitado na criacao: saldo e historico mudam apenas quando a maquina confirma.
 
-```bash
-curl -X POST http://localhost:8000/users/credit \
-  -H "Content-Type: application/json" \
-  -d '{"userId":"user1","amount":100}'
-```
+Créditos só podem ser adicionados após a confirmação idempotente de um pedido de pagamento. TeddyCoins são promocionais e não podem ser convertidas em créditos ou transferidas para máquinas. Consulte `../docs/ECONOMY.md`.
 
 ## Observacoes de QA
 

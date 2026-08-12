@@ -13,13 +13,16 @@ async function main() {
       username: 'erick_crane_master',
       email: 'erick@catchup.com',
       password: await bcrypt.hash(process.env.DEMO_PASSWORD ?? 'demo-password', 12),
-      balance: 150,
+      creditBalance: 150,
     },
   });
 
-  console.log("Prisma client ready:", user);
+  console.log('Prisma client ready:', { id: user.id, username: user.username, email: user.email });
 }
 
 main()
-  .catch((e) => console.error(e))
+  .catch((error) => {
+    console.error('Database test failed:', error instanceof Error ? error.message : 'Unknown error');
+    process.exitCode = 1;
+  })
   .finally(async () => await prisma.$disconnect());

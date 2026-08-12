@@ -1,9 +1,14 @@
 import { Router } from 'express';
-import { startGame } from '../controllers/gameController';
+import { completeGame, listGameHistory, listGames, startGame } from '../controllers/gameController';
 import { verifyToken } from '../middlewares/authMiddleware';
+import { gameCompleteRateLimit, gameReadRateLimit, gameStartRateLimit } from '../middlewares/gameRateLimit';
 
 const router = Router();
 
-router.post('/:gameId/start', verifyToken, startGame);
+router.use(verifyToken);
+router.get('/', gameReadRateLimit, listGames);
+router.get('/history', gameReadRateLimit, listGameHistory);
+router.post('/:gameId/start', gameStartRateLimit, startGame);
+router.post('/:gameId/complete', gameCompleteRateLimit, completeGame);
 
 export default router;

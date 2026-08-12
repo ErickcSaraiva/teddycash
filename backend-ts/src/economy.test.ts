@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { CREDIT_PACKAGES } from './constants/creditPackages';
 import { getCheckinDayKey, getNextCheckinAt } from './services/rewardService';
+import { GAME_ENTRY_COST } from './services/gameService';
 
 test('catálogo oficial possui os quatro snapshots corretos', () => {
   assert.deepEqual(CREDIT_PACKAGES, [
@@ -17,4 +18,8 @@ test('dia de check-in usa America/Manaus e próxima fronteira local', () => {
   assert.equal(getCheckinDayKey(beforeMidnight), '2026-08-02');
   assert.equal(getNextCheckinAt(beforeMidnight).toISOString(), '2026-08-03T04:00:00.000Z');
   assert.equal(getCheckinDayKey(new Date('2026-08-03T04:00:00.000Z')), '2026-08-03');
+});
+
+test('minijogos não cobram créditos nem TeddyCoins para iniciar', () => {
+  assert.equal(GAME_ENTRY_COST, 0);
 });

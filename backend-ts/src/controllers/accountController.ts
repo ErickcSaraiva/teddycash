@@ -3,13 +3,12 @@ import type { Response } from 'express';
 import { prisma } from '../config/prisma';
 import type { AuthRequest } from '../middlewares/authMiddleware';
 import type { MachineRequest } from '../middlewares/machineAuthMiddleware';
+import { InsufficientCreditsError, recordCreditMovement } from '../services/creditService';
 
 const AUTHORIZATION_TTL_MS = 2 * 60 * 1000;
 const MAX_CREDITS_PER_AUTHORIZATION = 10;
 const DEFAULT_PAGE_SIZE = 20;
 const MAX_PAGE_SIZE = 100;
-
-class InsufficientBalanceError extends Error {}
 
 function apiError(res: Response, status: number, code: string, message: string, details = {}) {
   return res.status(status).json({ error: { code, message }, ...details });
@@ -34,7 +33,7 @@ export const getBalance = async (req: AuthRequest, res: Response) => {
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) return apiError(res, 404, 'USER_NOT_FOUND', 'Usuario nao encontrado.');
 
-  return res.json({ user_id: user.id, balance: user.balance, cashback: user.cashback });
+  return res.json({ user_id: user.id, balance: user.creditBalance, cashback: user.cashback });
 };
 
 export const getTransactions = async (req: AuthRequest, res: Response) => {
@@ -67,6 +66,9 @@ export const getTransactions = async (req: AuthRequest, res: Response) => {
       machine_id: transaction.machineId,
       channel: transaction.channel,
       type: transaction.type,
+      source: transaction.source,
+      reference_id: transaction.referenceId,
+      balance_after: transaction.balanceAfter,
       created_at: transaction.createdAt,
     })),
     pagination: { page, limit, total, total_pages: Math.ceil(total / limit) },
@@ -109,7 +111,7 @@ export const createMachineAuthorization = async (req: AuthRequest, res: Response
     if ((channel === 'QR' && !machine.qrEnabled) || (channel === 'NFC' && !machine.nfcEnabled)) {
       return { status: 'channel_unavailable' as const };
     }
-    if (user.balance < amount) return { status: 'insufficient' as const, balance: user.balance };
+    if (user.creditBalance < amount) return { status: 'insufficient' as const, balance: user.creditBalance };
 
     await tx.machineAuthorization.updateMany({
       where: { userId, status: 'PENDING' },
@@ -197,20 +199,14 @@ export const redeemMachineAuthorization = async (req: MachineRequest, res: Respo
       if (claim.count === 0) return { status: 'unavailable' as const };
 
       const authorization = await tx.machineAuthorization.findUniqueOrThrow({ where: { token } });
-      const debit = await tx.user.updateMany({
-        where: { id: authorization.userId, balance: { gte: authorization.amount } },
-        data: { balance: { decrement: authorization.amount } },
-      });
-      if (debit.count === 0) throw new InsufficientBalanceError();
-
-      const transaction = await tx.transaction.create({
-        data: {
-          userId: authorization.userId,
-          amount: -authorization.amount,
-          machineId: authorization.machineId,
-          channel: authorization.channel,
-          type: 'MACHINE_UNLOCK',
-        },
+      const transaction = await recordCreditMovement(tx, {
+        userId: authorization.userId,
+        amount: -authorization.amount,
+        machineId: authorization.machineId,
+        channel: authorization.channel,
+        type: 'MACHINE_UNLOCK',
+        source: 'MACHINE_AUTHORIZATION',
+        referenceId: authorization.id,
       });
       const consumed = await tx.machineAuthorization.update({
         where: { token },
@@ -234,7 +230,7 @@ export const redeemMachineAuthorization = async (req: MachineRequest, res: Respo
       message: 'Libere a quantidade autorizada de jogadas.',
     });
   } catch (error) {
-    if (error instanceof InsufficientBalanceError) {
+    if (error instanceof InsufficientCreditsError) {
       return apiError(res, 409, 'INSUFFICIENT_BALANCE', 'Saldo insuficiente.');
     }
     throw error;

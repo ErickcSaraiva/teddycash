@@ -1,8 +1,7 @@
 import { prisma } from '../config/prisma';
-import { debitTeddyCoinsInTransaction, creditTeddyCoinsInTransaction } from './teddyCoinService';
+import { creditTeddyCoinsInTransaction } from './teddyCoinService';
 
 export const DAILY_CHECKIN_REWARD = 10;
-export const CREDIT_REDEMPTION_COST = 500;
 export const REWARDS_TIME_ZONE = process.env.REWARDS_TIME_ZONE ?? 'America/Manaus';
 
 export class CheckinAlreadyClaimedError extends Error {
@@ -49,19 +48,4 @@ export async function claimDailyCheckin(userId: string, now = new Date()) {
     }
     throw error;
   }
-}
-
-export async function redeemCredit(userId: string) {
-  return prisma.$transaction(async (tx) => {
-    const referenceId = `credit-redemption:${crypto.randomUUID()}`;
-    const movement = await debitTeddyCoinsInTransaction(tx, {
-      userId, amount: CREDIT_REDEMPTION_COST, type: 'CREDIT_REDEMPTION', referenceId,
-      description: 'Resgate de 1 crédito',
-    });
-    const user = await tx.user.update({
-      where: { id: userId }, data: { balance: { increment: 1 } }, select: { balance: true, teddyCoins: true },
-    });
-    await tx.transaction.create({ data: { userId, amount: 1, type: 'TEDDY_COIN_CREDIT_REDEMPTION' } });
-    return { credits: user.balance, teddyCoins: user.teddyCoins, movement };
-  });
 }

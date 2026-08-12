@@ -9,40 +9,60 @@ datasource db {
   provider = "postgresql"
 }
 
-// Usuários, saldo e cashback.
+// Usuários, créditos financeiros, cashback legado e TeddyCoins promocionais.
 model User {
-  id        String   @id @default(uuid())
-  username  String   @unique
-  email     String   @unique
-  password  String
-  avatarUrl String?
-  balance   Int      @default(0)
-  cashback  Float    @default(0.0)
-  teddyCoins Int     @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String   @id @default(uuid())
+  username      String   @unique
+  email         String   @unique
+  password      String
+  avatarUrl     String?
+  creditBalance Int      @default(0)
+  cashback      Float    @default(0.0)
+  teddyCoins    Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  transactions   Transaction[]
-  gameSessions   GameSession[]
-  authorizations MachineAuthorization[]
-  paymentOrders   PaymentOrder[]
+  transactions          Transaction[]
+  gameSessions          GameSession[]
+  authorizations        MachineAuthorization[]
+  paymentOrders         PaymentOrder[]
   teddyCoinTransactions TeddyCoinTransaction[]
 }
 
-// Extrato de créditos e débitos.
+enum CreditTransactionType {
+  CREDIT_PURCHASE
+  MACHINE_UNLOCK
+  ADMIN_ADJUSTMENT
+  LEGACY_PIX_CREDIT
+  LEGACY_TEDDY_COIN_REDEMPTION
+}
+
+enum CreditTransactionSource {
+  PAYMENT_ORDER
+  MACHINE_AUTHORIZATION
+  ADMIN
+  LEGACY
+}
+
+// Ledger exclusivo dos créditos financeiros usados nas máquinas.
 model Transaction {
-  id        String   @id @default(uuid())
-  userId    String
-  amount    Int
-  type      String
-  machineId String?
-  channel   MachineChannel?
-  createdAt DateTime @default(now())
+  id           String                  @id @default(uuid())
+  userId       String
+  amount       Int
+  type         CreditTransactionType
+  source       CreditTransactionSource @default(LEGACY)
+  referenceId  String?
+  balanceAfter Int?
+  machineId    String?
+  channel      MachineChannel?
+  createdAt    DateTime                @default(now())
 
   user User @relation(fields: [userId], references: [id])
 
+  @@unique([userId, type, referenceId])
   @@index([userId, createdAt])
   @@index([machineId, createdAt])
+  @@index([referenceId])
 }
 
 // Configurações globais do Live-Ops.
@@ -55,24 +75,34 @@ model ThemeSettings {
 
 // Sessões do motor de gamificação.
 model GameSession {
-  id          String            @id @default(uuid())
-  userId      String
-  gameId      String
-  status      GameSessionStatus @default(STARTED)
-  coinsEarned Int               @default(0)
-  startedAt   DateTime          @default(now())
-  finishedAt  DateTime?
-  won         Boolean?
-  createdAt   DateTime          @default(now())
+  id             String            @id @default(uuid())
+  userId         String
+  gameId         String
+  status         GameSessionStatus @default(STARTED)
+  tokenHash      String?           @unique
+  expiresAt      DateTime?
+  score          Int?
+  eventCount     Int?
+  resultHash     String?
+  rejectedReason String?
+  coinsEarned    Int               @default(0)
+  startedAt      DateTime          @default(now())
+  finishedAt     DateTime?
+  won            Boolean?
+  createdAt      DateTime          @default(now())
 
   user User @relation(fields: [userId], references: [id])
 
   @@index([userId, createdAt])
+  @@index([userId, gameId, startedAt])
+  @@index([status, expiresAt])
 }
 
 enum GameSessionStatus {
   STARTED
-  FINISHED
+  COMPLETED
+  EXPIRED
+  REJECTED
 }
 
 enum TeddyCoinTransactionType {

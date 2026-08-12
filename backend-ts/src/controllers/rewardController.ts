@@ -1,7 +1,6 @@
 import type { Response } from 'express';
 import type { AuthRequest } from '../middlewares/authMiddleware';
-import { CheckinAlreadyClaimedError, claimDailyCheckin, redeemCredit } from '../services/rewardService';
-import { InsufficientTeddyCoinsError } from '../services/teddyCoinService';
+import { CheckinAlreadyClaimedError, claimDailyCheckin } from '../services/rewardService';
 
 export async function dailyCheckin(req: AuthRequest, res: Response) {
   if (!req.userId) return res.status(401).json({ error: 'Usuário não autenticado.' });
@@ -14,19 +13,5 @@ export async function dailyCheckin(req: AuthRequest, res: Response) {
     }
     console.error('Daily check-in failed:', error);
     return res.status(500).json({ success: false, error: 'Erro interno no check-in.' });
-  }
-}
-
-export async function redeemCreditReward(req: AuthRequest, res: Response) {
-  if (!req.userId) return res.status(401).json({ error: 'Usuário não autenticado.' });
-  try {
-    const result = await redeemCredit(req.userId);
-    return res.json({ success: true, spent_teddy_coins: 500, credits_added: 1, balance: { credits: result.credits, teddy_coins: result.teddyCoins } });
-  } catch (error) {
-    if (error instanceof InsufficientTeddyCoinsError) {
-      return res.status(409).json({ success: false, code: 'INSUFFICIENT_TEDDY_COINS', required: error.required, available: error.available });
-    }
-    console.error('Credit redemption failed:', error);
-    return res.status(500).json({ success: false, error: 'Erro interno no resgate.' });
   }
 }

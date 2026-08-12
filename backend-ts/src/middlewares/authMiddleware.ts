@@ -1,6 +1,7 @@
 // backend-ts/src/middlewares/authMiddleware.ts
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { JWT_SECRET } from '../config/auth';
 
 // Estendemos a tipagem do Express para que o TypeScript reconheça o req.userId
 export interface AuthRequest extends Request {
@@ -25,7 +26,7 @@ export const verifyToken = (req: AuthRequest, res: Response, next: NextFunction)
 
   try {
     // 3. Tenta abrir o cofre usando a mesma senha secreta do login
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
+    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
     
     // 4. Se deu certo, salva o ID do usuário na requisição para ser usado pelas próximas funções
     req.userId = decoded.userId; 

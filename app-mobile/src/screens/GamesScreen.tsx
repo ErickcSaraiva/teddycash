@@ -5,11 +5,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { getPalette } from '../theme/palettes';
 import { submitGameScore } from '../services/gamesApi';
 
-type Props = {
-  userId?: string;
-};
-
-export default function GamesScreen({ userId = 'user1' }: Props) {
+export default function GamesScreen() {
   const { theme } = useTheme();
   const palette = getPalette(theme);
   
@@ -22,11 +18,11 @@ export default function GamesScreen({ userId = 'user1' }: Props) {
     const newClicks = clicks + 1;
     setClicks(newClicks);
 
-    // Tela legada: o backend apenas inicia uma sessão e cobra a entrada.
+    // Tela legada: o backend apenas inicia uma sessão gratuita.
     if (newClicks >= 10) {
       setIsLoading(true);
       try {
-        await submitGameScore(userId, 50);
+        await submitGameScore();
         Alert.alert('Partida iniciada', 'A recompensa só será paga após validação segura do servidor.');
       } catch {
         Alert.alert('Erro', 'Ocorreu um erro ao validar a tua pontuação. O Anti-Cheat pode ter bloqueado.');
@@ -84,7 +80,7 @@ export default function GamesScreen({ userId = 'user1' }: Props) {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Teddy Clicker 🐻</Text>
-      <Text style={styles.subtitle}>Entrada: 5 TeddyCoins. Prêmio validado: 25 TeddyCoins.</Text>
+      <Text style={styles.subtitle}>Entrada gratuita. TeddyCoins não podem virar créditos de máquina.</Text>
 
       <TouchableOpacity 
         style={styles.gameButton} 

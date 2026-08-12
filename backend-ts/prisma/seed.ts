@@ -12,14 +12,13 @@ async function main() {
   const machineApiKey = process.env.DEMO_MACHINE_API_KEY ?? 'change-me-before-sharing';
 
   await prisma.user.upsert({
-    where: { id: 'user1' },
+    where: { username: 'demo_user' },
     update: {},
     create: {
-      id: 'user1',
       username: 'demo_user',
       email: 'demo@catchup.local',
       password: await bcrypt.hash(demoPassword, 12),
-      balance: 1250,
+      creditBalance: 1250,
     },
   });
 

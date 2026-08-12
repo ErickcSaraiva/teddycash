@@ -1,6 +1,7 @@
 import { prisma } from '../config/prisma';
 import { CREDIT_PACKAGES } from '../constants/creditPackages';
 import { creditTeddyCoinsInTransaction } from './teddyCoinService';
+import { recordCreditMovement } from './creditService';
 
 export function getCreditPackageByCode(packageCode: string) {
   return CREDIT_PACKAGES.find((item) => item.code === packageCode);
@@ -24,7 +25,7 @@ export async function confirmPaidOrder(orderId: string, providerId: string) {
         if (!user) {
           throw new Error('User not found.');
         }
-        return { balance: user.balance, teddyCoins: user.teddyCoins };
+        return { balance: user.creditBalance, teddyCoins: user.teddyCoins };
       }
       throw new Error('Order already paid.');
     }
@@ -41,24 +42,17 @@ export async function confirmPaidOrder(orderId: string, providerId: string) {
       const processedOrder = await tx.paymentOrder.findUniqueOrThrow({ where: { id: orderId } });
       if (processedOrder.status === 'PAID' && processedOrder.providerId === providerId) {
         const user = await tx.user.findUniqueOrThrow({ where: { id: order.userId } });
-        return { balance: user.balance, teddyCoins: user.teddyCoins };
+        return { balance: user.creditBalance, teddyCoins: user.teddyCoins };
       }
       throw new Error('Order was processed concurrently.');
     }
 
-    const updatedUser = await tx.user.update({
-      where: { id: order.userId },
-      data: {
-        balance: { increment: order.credits },
-      },
-    });
-
-    await tx.transaction.create({
-      data: {
-        userId: order.userId,
-        amount: order.credits,
-        type: 'CREDIT_PURCHASE',
-      },
+    const creditMovement = await recordCreditMovement(tx, {
+      userId: order.userId,
+      amount: order.credits,
+      type: 'CREDIT_PURCHASE',
+      source: 'PAYMENT_ORDER',
+      referenceId: order.id,
     });
 
     const pkg = getCreditPackageByCode(order.packageCode);
@@ -70,8 +64,8 @@ export async function confirmPaidOrder(orderId: string, providerId: string) {
       : null;
 
     return {
-      balance: updatedUser.balance,
-      teddyCoins: teddyMovement?.balanceAfter ?? updatedUser.teddyCoins,
+      balance: creditMovement.balanceAfter!,
+      teddyCoins: teddyMovement?.balanceAfter ?? (await tx.user.findUniqueOrThrow({ where: { id: order.userId } })).teddyCoins,
     };
   });
 }

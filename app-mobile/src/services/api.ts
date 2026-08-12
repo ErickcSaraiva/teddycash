@@ -5,7 +5,7 @@ import { sessionStorage } from './sessionStorage';
 const TOKEN_KEY = 'teddycash_token';
 
 export class ApiError extends Error {
-  constructor(message: string, public readonly status?: number) {
+  constructor(message: string, public readonly status?: number, public readonly code?: string) {
     super(message);
     this.name = 'ApiError';
   }
@@ -42,7 +42,9 @@ api.interceptors.response.use(
       const path = error?.config?.url ?? '';
       console.log(`[API] ${method} ${path} -> ${error?.response?.status ?? 'NETWORK'}: ${message}`);
     }
-    return Promise.reject(new ApiError(message, error?.response?.status));
+    const responseError = error?.response?.data?.error;
+    const code = typeof responseError === 'object' ? responseError?.code : undefined;
+    return Promise.reject(new ApiError(message, error?.response?.status, code));
   },
 );
 
