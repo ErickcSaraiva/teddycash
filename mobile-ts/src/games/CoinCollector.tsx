@@ -8,9 +8,6 @@ import {
   Alert,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import ApiService from '../../services/api';
-
-const api = new ApiService();
 
 export default function CoinCollectorGame() {
   const [coinsCollected, setCoinsCollected] = useState(0);
@@ -38,23 +35,8 @@ export default function CoinCollectorGame() {
   };
 
   const handleGameEnd = async () => {
-    try {
-      setSending(true);
-      // Validar e registrar score
-      const result = await api.transfer('user1', coinsCollected, 'CoinCollector Game');
-      if (result.status === 'ok') {
-        Alert.alert(
-          'Parabéns!',
-          `Você coletou ${coinsCollected} moedas!\n\nMoedas transferidas para sua conta.`,
-          [{ text: 'OK', onPress: () => {} }]
-        );
-      }
-    } catch (error) {
-      Alert.alert('Erro', 'Não foi possível salvar o resultado.');
-      console.warn(error);
-    } finally {
-      setSending(false);
-    }
+    setSending(false);
+    Alert.alert('Jogo legado desativado', 'Use o Caça às TeddyCoins em app-mobile, que valida a sessão no backend.');
   };
 
   return (

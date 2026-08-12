@@ -1,214 +1,27 @@
-# Minigames - Tech Stack Decision
+# Minijogos — arquitetura adotada
 
-## Análise de Opções
+O primeiro minijogo usa React Native e APIs já presentes no Expo SDK 54. Não foram adicionados engines, WebViews, bibliotecas de física, personagens, imagens ou sons externos.
 
-### 1. **React Native + Animated API** (Recomendado para 2D simples)
-**Pros:**
-- Integração nativa com React Native
-- Sem dependências externas pesadas
-- Bom para jogos 2D simples com lógica de negócio
+## Componentes
 
-**Contras:**
-- Limitado para gráficos complexos
-- Performance não é a melhor para games intensivos
-- Difícil para physics e colisão avançada
+- `app-mobile/src/games/coinCollectorLogic.ts`: lógica pura e testável de posição, pontuação, obstáculos, eventos e cronômetro.
+- `app-mobile/app/coin-collector.tsx`: interface acessível da partida e integração com as sessões.
+- `app-mobile/src/services/gamesApiCore.ts`: contrato de rede sem `userId` e sem recompensa definida pelo cliente.
+- `backend-ts/src/constants/gameCatalog.ts`: catálogo e limites oficiais.
+- `backend-ts/src/services/gameService.ts`: sessão, validação, idempotência e recompensa calculada pelo servidor.
 
-**Ideal para:** Puzzle simples, coleta de moedas, cliques, desafios rápidos
+## Segurança e economia
 
----
+O usuário vem exclusivamente do JWT. O cliente envia sessão, token temporário, duração, placar alegado e eventos; o backend recalcula e valida o resultado. Conclusão, ledger e incremento de `teddyCoins` acontecem na mesma transação Prisma. Créditos financeiros não são cobrados nem recompensados pelo jogo.
 
-### 2. **Phaser 3** (Recomendado para 2D com física)
-**Pros:**
-- Framework de jogos robusto para 2D
-- Suporte a Física, Animação, Colisão nativa
-- Comunidade grande, muitos exemplos
-- Funciona bem em mobile
+Não há apostas, loot boxes, roletas, prêmios financeiros aleatórios, compra de vantagem ou perfilamento comercial por comportamento de jogo.
 
-**Contras:**
-- Precisa de Web View (não é React Native puro)
-- Mais peso/overhead
-- Curva de aprendizado
+## Dependências e licença
 
-**Ideal para:** Plataformers, action games, physics-based games
+O jogo não adicionou dependências. Ele usa React Native 0.81.5, Expo 54.0.36 e Expo Router 6.0.24, todos sob licença MIT. Emojis Unicode e componentes próprios formam os elementos visuais.
 
----
+## Limitações
 
-### 3. **Babylon.js** (Para 3D)
-**Pros:**
-- Motor 3D profissional
-- WebGL, render de alta qualidade
-- Bem documentado
-
-**Contras:**
-- Overkill para minigames simples
-- Maior peso na app
-- Curva de aprendizado alta
-
-**Ideal para:** Experiências 3D imersivas, slots 3D
-
----
-
-### 4. **HTML5 Canvas via WebView** (Flexível)
-**Pros:**
-- Máxima flexibilidade
-- Pode usar qualquer lib JS (PixiJS, Kaboom, etc.)
-- Fácil integração com backend
-
-**Contras:**
-- Performance variável
-- Overhead de WebView
-- Curva de aprendizado depende da lib
-
-**Ideal para:** Qualquer tipo de minigame com HTML5
-
----
-
-## 🎯 Recomendação Final
-
-### **Abordagem Híbrida (Recomendada)**
-
-#### **Tier 1 - Minigames Simples:** React Native + Animated
-- Coleta de moedas (tap/swipe)
-- Quiz/Perguntas
-- Desafios de tempo
-
-#### **Tier 2 - Minigames com Física:** Phaser 3 via WebView
-- Garras (clawmachine style)
-- Plataformers simples
-- Puzzle com física
-
-#### **Tier 3 - Experiências Premium:** Babylon.js via WebView
-- Slots 3D
-- Ambientes exploráveis
-
----
-
-## 🚀 Implementação Recomendada
-
-### Estrutura de Pastas Proposta
-
-```
-mobile-ts/
-├── src/
-│   ├── games/
-│   │   ├── simple/           # React Native puro
-│   │   │   ├── CoinCollector/
-│   │   │   ├── QuickTap/
-│   │   │   └── ...
-│   │   │
-│   │   ├── webview/          # HTML5 + Phaser/Babylon
-│   │   │   ├── games/
-│   │   │   │   ├── clawmachine.html
-│   │   │   │   ├── platformer.html
-│   │   │   │   └── ...
-│   │   │   ├── lib/          # Phaser, Babylon configs
-│   │   │   └── index.html
-│   │   │
-│   │   └── GameContainer.tsx # Component que escolhe qual renderizar
-│   │
-│   └── screens/
-│       └── Games.tsx         # Lista e navega para minigames
-```
-
-### Tecnologias Específicas
-
-**React Native Simples:**
-- `react-native-animated` (built-in)
-- `react-native-gesture-handler` (já instalado)
-- `react-native-reanimated` (para animações avançadas)
-
-**WebView Tier:**
-- `react-native-webview` (render HTML/JS)
-- `phaser` (framework de jogos 2D)
-- `babylon.js` (engine 3D)
-
-**Comunicação:**
-- Bridge de API entre minigame e backend (passar user_id, moedas ganhas, etc.)
-
----
-
-## 📋 Próximos Passos
-
-1. **Instalar dependências base:**
-   ```bash
-   npm install react-native-webview react-native-reanimated phaser
-   ```
-
-2. **Criar primeiro minigame simples** (React Native):
-   - Exemplo: Tap para coletar moedas
-
-3. **Criar WebView wrapper** para Phaser:
-   - Exemplo: Clawmachine game
-
-4. **Integrar com backend:**
-   - Endpoint: `POST /games/complete` (recebe: user_id, game_id, score, coins_earned)
-
----
-
-## 📊 Comparação Rápida
-
-| Aspecto | React Native | Phaser | Babylon |
-|---------|-------------|---------|----------|
-| Facilidade | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐ |
-| Performance | ⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ |
-| Complexidade Gráfica | ⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
-| Curva Aprendizado | Baixa | Média | Alta |
-| Peso/Tamanho | Mínimo | Médio | Alto |
-
----
-
-## 🎮 Exemplo de Minigame - "Coin Collector"
-
-```typescript
-// mobile-ts/src/games/simple/CoinCollector/index.tsx
-import React, { useState, useEffect } from 'react';
-import { View, Pressable, Text, StyleSheet, Animated } from 'react-native';
-
-export default function CoinCollector() {
-  const [coinsCollected, setCoinsCollected] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(30);
-  const animation = new Animated.Value(0);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft(t => t - 1);
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [timeLeft]);
-
-  const handleCoinTap = () => {
-    setCoinsCollected(c => c + 1);
-    Animated.sequence([
-      Animated.timing(animation, { toValue: 1, duration: 200, useNativeDriver: false }),
-      Animated.timing(animation, { toValue: 0, duration: 200, useNativeDriver: false }),
-    ]).start();
-  };
-
-  return (
-    <View style={styles.container}>
-      <Text style={styles.timer}>{timeLeft}s</Text>
-      <Text style={styles.score}>Moedas: {coinsCollected}</Text>
-      <Pressable style={styles.coin} onPress={handleCoinTap}>
-        <Text style={styles.coinEmoji}>🪙</Text>
-      </Pressable>
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  timer: { fontSize: 32, fontWeight: 'bold' },
-  score: { fontSize: 20 },
-  coin: { width: 100, height: 100, borderRadius: 50, backgroundColor: '#FFD700', justifyContent: 'center', alignItems: 'center', marginTop: 20 },
-  coinEmoji: { fontSize: 60 },
-});
-```
-
----
-
-## ⚠️ Notas Importantes
-
-- **Performance:** Teste em dispositivos reais (não só emulador)
-- **Backend:** Prepare um sistema de verificação de fraude (validar scores no servidor)
-- **Analytics:** Rastreie qual minigame converte melhor
-- **Balanceamento:** Ajuste dificuldade e recompensas com base em dados
+- A partida fica apenas em memória e é abandonada se o aplicativo for encerrado.
+- Android físico requer teste manual de toque, desempenho e redução de movimento.
+- O rate limiter em memória deve ser substituído por armazenamento distribuído em implantação com múltiplas instâncias.

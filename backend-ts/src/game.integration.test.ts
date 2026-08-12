@@ -20,6 +20,12 @@ test('sessões de jogo são isoladas, idempotentes e não alteram créditos', { 
   try {
     const started = await startGameSession(owner.id, GAME, new Date('2026-08-12T12:00:00Z'));
     assert.equal(started.teddyCoins, 0);
+    const tooFast = await startGameSession(owner.id, GAME, new Date('2026-08-12T11:00:00Z'));
+    await assert.rejects(
+      () => completeGameSession(owner.id, GAME, { sessionId: tooFast.session.id, sessionToken: tooFast.token, durationMs: 30_000, score: 0, events: [] }, new Date('2026-08-12T11:00:01Z')),
+      (error: unknown) => error instanceof GameDomainError && error.code === 'IMPOSSIBLE_ELAPSED_TIME',
+    );
+    assert.equal((await prisma.gameSession.findUniqueOrThrow({ where: { id: tooFast.session.id } })).status, 'REJECTED');
     await assert.rejects(
       () => completeGameSession(other.id, GAME, { sessionId: started.session.id, sessionToken: started.token, durationMs: 30_000, score: 10, events: events(10) }),
       (error: unknown) => error instanceof GameDomainError && error.code === 'SESSION_FORBIDDEN',
@@ -49,7 +55,7 @@ test('sessões de jogo são isoladas, idempotentes e não alteram créditos', { 
     );
     assert.equal((await prisma.gameSession.findUniqueOrThrow({ where: { id: expired.session.id } })).status, 'EXPIRED');
 
-    for (let index = 0; index < 3; index += 1) await startGameSession(owner.id, GAME, new Date(`2026-08-12T14:0${index}:00Z`));
+    for (let index = 0; index < 2; index += 1) await startGameSession(owner.id, GAME, new Date(`2026-08-12T14:0${index}:00Z`));
     await assert.rejects(
       () => startGameSession(owner.id, GAME, new Date('2026-08-12T15:00:00Z')),
       (error: unknown) => error instanceof GameDomainError && error.code === 'DAILY_LIMIT_REACHED',

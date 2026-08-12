@@ -128,7 +128,7 @@ export default function ProfileScreen() {
           <Image source={displayAvatar} style={styles.avatar} />
           <Text style={[styles.name, { color: palette.text }]}>{username ?? 'Usuário'}</Text>
           <Text style={[styles.email, { color: palette.softText }]}>{email ?? 'Sem e-mail'}</Text>
-          <Text style={[styles.balance, { color: palette.primary }]}>Saldo: {balance ?? 0} créditos</Text>
+          <Text style={[styles.balance, { color: palette.primary }]}>Saldo: {balance ?? '—'} créditos</Text>
         </View>
 
         <View style={[styles.formCard, { backgroundColor: palette.card }]}> 

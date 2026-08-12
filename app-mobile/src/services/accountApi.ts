@@ -31,7 +31,7 @@ export type TransactionResponse = {
 };
 
 export type AuthorizationResult =
-  | { status: 'pending'; authorizationId: string; authorizationToken: string; machinePayload: string; expiresAt: string }
+  | { status: 'pending'; authorizationId: string; machinePayload: string; expiresAt: string }
   | { status: 'insufficient'; balance: number }
   | { status: 'not_found' }
   | { status: 'error' };
@@ -69,7 +69,6 @@ export async function getTransactions(userId: string): Promise<TransactionRespon
 }
 
 export async function createMachineAuthorization(
-  _userId: string,
   amount: number,
   machineId: string,
   method: 'QR' | 'NFC' = 'QR',
@@ -91,13 +90,14 @@ export async function createMachineAuthorization(
     return {
       status: 'pending',
       authorizationId: body.authorization_id,
-      authorizationToken: body.authorization_token,
       machinePayload: body.machine_payload,
       expiresAt: body.expires_at,
     };
   }
   if (res.status === 409 && body?.error?.code === 'INSUFFICIENT_BALANCE') {
-    return { status: 'insufficient', balance: body?.balance ?? 0 };
+    return Number.isFinite(body?.balance)
+      ? { status: 'insufficient', balance: body.balance }
+      : { status: 'error' };
   }
   if (res.status === 404) {
     return { status: 'not_found' };
@@ -116,21 +116,4 @@ export async function getMachineAuthorizationStatus(authorizationId: string): Pr
   const res = await fetch(`${API_BASE_URL}/machine-authorizations/${authorizationId}`, { headers: headers as HeadersInit }).catch(() => { throw new Error(API_UNAVAILABLE_MESSAGE); });
   if (!res.ok) throw new Error(`Falha ao consultar autorização (HTTP ${res.status})`);
   return res.json();
-}
-
-export async function simulateMachineConfirmation(machineId: string, authorizationToken: string) {
-  if (!__DEV__) throw new Error('A simulação da máquina só pode ser usada em desenvolvimento.');
-  const apiKey = process.env.EXPO_PUBLIC_DEMO_MACHINE_API_KEY ?? 'change-me-before-sharing';
-  const res = await fetch(`${API_BASE_URL}/machine-authorizations/redeem`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-      'X-Machine-Id': machineId,
-    },
-    body: JSON.stringify({ authorization_token: authorizationToken }),
-  });
-  const body = await parseJsonSafe(res);
-  if (!res.ok) throw new Error(body?.error?.message ?? `Falha na simulação (HTTP ${res.status})`);
-  return body;
 }

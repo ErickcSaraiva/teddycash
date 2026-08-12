@@ -4,7 +4,7 @@ Minijogo original construído somente com componentes React Native e emojis Unic
 
 ## Teste manual no Expo
 
-Pré-requisito: usar um banco isolado com as migrations das Fases 2 e 3 aplicadas. Não aponte um backend com código novo para um schema antigo.
+Pré-requisito: usar um banco isolado com todas as migrations aplicadas. Não aponte um backend com código novo para um schema antigo.
 
 1. Inicie o backend com `cd backend-ts && npm run dev`.
 2. Configure `app-mobile/.env.local` com `EXPO_PUBLIC_API_BASE=http://IP_DO_COMPUTADOR:8000`.

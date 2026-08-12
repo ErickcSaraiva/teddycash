@@ -1,11 +1,5 @@
-// Tela de saldo/cashback. Usa o tema dinâmico vindo do Postgres via
-// useTheme() (ThemeContext.tsx) e os endpoints reais do backend
-// (accountApi.ts). Pull-to-refresh incluso.
-//
-// NOTA sobre auth: o accountController.ts hoje ainda cai num
-// DEMO_USER ('user1') quando o id bate com ele. Assim que a
-// autenticação real estiver plugada no app, troque a prop `userId`
-// abaixo pelo id vindo do seu contexto/hook de auth.
+// Tela legada de saldo/cashback. Recebe explicitamente a identidade
+// autenticada do componente chamador; não possui usuário de fallback.
 
 import React, { useCallback, useEffect, useState } from 'react';
 import {
@@ -15,7 +9,6 @@ import {
   FlatList,
   RefreshControl,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
 import { getPalette } from '../theme/palettes';
@@ -27,7 +20,7 @@ import {
 } from '../services/accountApi';
 
 type Props = {
-  userId?: string;
+  userId: string;
 };
 
 function formatCoins(value: number): string {
@@ -51,7 +44,7 @@ const TX_LABELS: Record<string, string> = {
   CREDIT_PURCHASE: 'Compra de créditos',
   MACHINE_UNLOCK: 'Uso em máquina',
 };
-export default function BalanceScreen({ userId = 'aac89278-fbcd-40eb-9abb-5c7c6cee0058' }: Props) {
+export default function BalanceScreen({ userId }: Props) {
   const { theme, isLoading: themeLoading } = useTheme();
   const palette = getPalette(theme);
   const styles = makeStyles(palette);
@@ -71,8 +64,7 @@ export default function BalanceScreen({ userId = 'aac89278-fbcd-40eb-9abb-5c7c6c
       ]);
       setAccount(balanceRes);
       setTransactions(txRes);
-    } catch (err) {
-      console.warn(err);
+    } catch {
       setError('Não foi possível carregar seu saldo agora.');
     }
   }, [userId]);
@@ -120,7 +112,7 @@ export default function BalanceScreen({ userId = 'aac89278-fbcd-40eb-9abb-5c7c6c
 
           <View style={styles.card} accessibilityLabel="Cartão de saldo e cashback">
             <Text style={styles.label}>Saldo disponível</Text>
-            <Text style={styles.balanceValue}>{formatCoins(account?.balance ?? 0)}</Text>
+            <Text style={styles.balanceValue}>{account ? formatCoins(account.balance) : '—'}</Text>
             <Text style={styles.coinsSuffix}>moedas</Text>
 
             <View style={styles.divider} />
@@ -128,7 +120,7 @@ export default function BalanceScreen({ userId = 'aac89278-fbcd-40eb-9abb-5c7c6c
             <View style={styles.cashbackRow}>
               <Text style={styles.label}>Cashback acumulado</Text>
               <Text style={styles.cashbackValue}>
-                {formatCoins(account?.cashback ?? 0)} moedas
+                {account ? `${formatCoins(account.cashback)} moedas` : '—'}
               </Text>
             </View>
           </View>

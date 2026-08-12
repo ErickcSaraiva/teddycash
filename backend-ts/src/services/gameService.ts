@@ -5,6 +5,7 @@ import { creditTeddyCoinsInTransaction } from './teddyCoinService';
 
 export const GAME_ENTRY_COST = 0;
 export const GAMES_TIME_ZONE = 'America/Manaus';
+const GAME_ELAPSED_TIME_TOLERANCE_MS = 2_000;
 
 export type GameEvent = { sequence: number; type: GameEventType; occurred_at_ms: number };
 export type CompleteGameInput = {
@@ -134,6 +135,10 @@ export async function completeGameSession(userId: string, gameId: string, input:
   } catch (error) {
     if (error instanceof GameDomainError && existing.status === 'STARTED') await rejectGameSession(userId, existing.id, error.code, now);
     throw error;
+  }
+  if (existing.status === 'STARTED' && now.getTime() - existing.startedAt.getTime() + GAME_ELAPSED_TIME_TOLERANCE_MS < validated.game.minimumDurationMs) {
+    await rejectGameSession(userId, existing.id, 'IMPOSSIBLE_ELAPSED_TIME', now);
+    throw new GameDomainError('IMPOSSIBLE_ELAPSED_TIME', 422, 'Tempo transcorrido incompatível com a duração informada.');
   }
 
   const result = await prisma.$transaction(async (tx) => {

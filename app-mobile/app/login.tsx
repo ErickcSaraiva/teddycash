@@ -436,31 +436,13 @@ export default function LoginScreen() {
     router.replace('/(tabs)/home');
   }, []);
 
-  const handleGoogleLogin = useCallback(async () => {
-    setLoading(true);
-    clearError();
-    try {
-      await login('google@teddycash.com', 'google-demo');
-      onLoginSuccess();
-    } catch (e: any) {
-      setError(e?.message ?? 'Falha no login com Google. Tente novamente.');
-    } finally {
-      setLoading(false);
-    }
-  }, [login, onLoginSuccess, clearError]);
+  const handleGoogleLogin = useCallback(() => {
+    setError('Login com Google ainda não está disponível. Use e-mail e senha.');
+  }, []);
 
-  const handleAppleLogin = useCallback(async () => {
-    setLoading(true);
-    clearError();
-    try {
-      await login('apple@teddycash.com', 'apple-demo');
-      onLoginSuccess();
-    } catch (e: any) {
-      setError(e?.message ?? 'Falha no login com Apple. Tente novamente.');
-    } finally {
-      setLoading(false);
-    }
-  }, [login, onLoginSuccess, clearError]);
+  const handleAppleLogin = useCallback(() => {
+    setError('Login com Apple ainda não está disponível. Use e-mail e senha.');
+  }, []);
 
   const handleEmailSubmit = useCallback(async () => {
     if (submitting.current) return;
@@ -505,42 +487,24 @@ export default function LoginScreen() {
     }
   }, [email, password, isSignUp, login, register, clearError, onLoginSuccess]);
 
-  const handleSendOtp = useCallback(async () => {
+  const handleSendOtp = useCallback(() => {
     const digits = phone.replace(/\D/g, '');
     if (digits.length < 10) {
       setError('Número inválido. Use DDD + número.');
       return;
     }
 
-    setLoading(true);
-    clearError();
-    try {
-      await new Promise((r) => setTimeout(r, 1000));
-      setOtpSent(true);
-    } catch (e: any) {
-      setError(e?.message ?? 'Não foi possível enviar o código.');
-    } finally {
-      setLoading(false);
-    }
-  }, [phone, clearError]);
+    setError('Login por telefone ainda não está disponível. Use e-mail e senha.');
+  }, [phone]);
 
-  const handleOtpSubmit = useCallback(async () => {
+  const handleOtpSubmit = useCallback(() => {
     if (otp.length !== 6) {
       setError('Código deve ter 6 dígitos.');
       return;
     }
 
-    setLoading(true);
-    clearError();
-    try {
-      await new Promise((r) => setTimeout(r, 1000));
-      onLoginSuccess();
-    } catch (e: any) {
-      setError(e?.message ?? 'Código inválido ou expirado.');
-    } finally {
-      setLoading(false);
-    }
-  }, [otp, onLoginSuccess, clearError]);
+    setError('Login por telefone ainda não está disponível. Use e-mail e senha.');
+  }, [otp]);
 
   const handleChangeEmail = useCallback((v: string) => {
     setEmail(v);

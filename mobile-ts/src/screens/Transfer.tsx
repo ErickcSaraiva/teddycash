@@ -9,9 +9,6 @@ import {
   Alert,
   ScrollView,
 } from 'react-native';
-import ApiService from '../services/api';
-
-const api = new ApiService();
 const MACHINES = ['Garra Teddy #42', 'Garra Teddy #17', 'Puzzle Teddy #03'];
 const AMOUNTS = [50, 100, 200];
 
@@ -46,23 +43,8 @@ export default function TransferScreen({ onCancel, onSuccess }: { onCancel: () =
   };
 
   async function handleSend() {
-    try {
-      setSending(true);
-      const result = await api.transfer('user1', selectedAmount, selectedMachine);
-      if (result.status === 'ok') {
-        Alert.alert('Moedas Enviadas!', `Você enviou ${selectedAmount} moedas para ${selectedMachine}.`, [
-          { text: 'Fechar', onPress: () => {} },
-        ]);
-        onSuccess();
-      } else {
-        Alert.alert('Falha', 'Não foi possível completar a transferência.');
-      }
-    } catch (error) {
-      console.warn(error);
-      Alert.alert('Falha', 'Não foi possível completar a transferência.');
-    } finally {
-      setSending(false);
-    }
+    setSending(false);
+    Alert.alert('Fluxo legado desativado', 'Use o aplicativo ativo em app-mobile para transferir com uma sessão autenticada.');
   }
 
   return (

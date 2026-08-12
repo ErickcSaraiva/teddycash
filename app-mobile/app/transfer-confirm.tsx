@@ -7,7 +7,6 @@ import { useAuth } from '@/src/hooks/useAuth';
 import {
   createMachineAuthorization,
   getMachineAuthorizationStatus,
-  simulateMachineConfirmation,
 } from '@/src/services/accountApi';
 
 export default function TransferConfirmScreen() {
@@ -26,10 +25,8 @@ export default function TransferConfirmScreen() {
   const [success, setSuccess] = useState(false);
   const [authorizationPayload, setAuthorizationPayload] = useState('');
   const [authorizationId, setAuthorizationId] = useState('');
-  const [authorizationToken, setAuthorizationToken] = useState('');
   const [expiresAt, setExpiresAt] = useState('');
   const [authorizationStatus, setAuthorizationStatus] = useState<'pending' | 'consumed' | 'expired' | 'cancelled'>('pending');
-  const [simulating, setSimulating] = useState(false);
   const [error, setError] = useState('');
 
   const credits = Number(amount);
@@ -77,7 +74,7 @@ export default function TransferConfirmScreen() {
     setError('');
 
     try {
-      const result = await createMachineAuthorization(userId, credits, machineId, method === 'NFC' ? 'NFC' : 'QR');
+      const result = await createMachineAuthorization(credits, machineId, method === 'NFC' ? 'NFC' : 'QR');
 
       if (result.status === 'insufficient') {
         setError(`Saldo insuficiente. Saldo atual: ${result.balance} créditos.`);
@@ -90,7 +87,6 @@ export default function TransferConfirmScreen() {
       }
       setAuthorizationPayload(result.machinePayload);
       setAuthorizationId(result.authorizationId);
-      setAuthorizationToken(result.authorizationToken);
       setExpiresAt(result.expiresAt);
       setAuthorizationStatus('pending');
       setSuccess(true);
@@ -98,21 +94,6 @@ export default function TransferConfirmScreen() {
       setError('Não foi possível conectar ao servidor.');
     } finally {
       setLoading(false);
-    }
-  }
-
-  async function simulateConfirmation() {
-    if (!__DEV__ || !machineId || !authorizationToken) return;
-    setSimulating(true);
-    setError('');
-    try {
-      await simulateMachineConfirmation(machineId, authorizationToken);
-      setAuthorizationStatus('consumed');
-      await refreshWallet();
-    } catch (simulationError) {
-      setError(simulationError instanceof Error ? simulationError.message : 'Falha ao simular a máquina.');
-    } finally {
-      setSimulating(false);
     }
   }
 
@@ -140,11 +121,6 @@ export default function TransferConfirmScreen() {
             </>
           ) : null}
 
-          {__DEV__ && authorizationStatus === 'pending' ? (
-            <Pressable disabled={simulating} onPress={simulateConfirmation} style={[styles.devButton, { borderColor: palette.primary }]}> 
-              <Text style={[styles.devButtonText, { color: palette.primary }]}>{simulating ? 'Confirmando...' : 'Simular confirmação do ESP32 (dev)'}</Text>
-            </Pressable>
-          ) : null}
           {error ? <Text style={styles.error}>{error}</Text> : null}
 
           <Pressable
@@ -221,7 +197,5 @@ const styles = StyleSheet.create({
   message: { fontSize: 16, lineHeight: 24, textAlign: 'center' },
   payload: { fontSize: 12, marginTop: 20, padding: 12, borderRadius: 10 },
   expiry: { fontSize: 13, textAlign: 'center', marginTop: 14 },
-  devButton: { borderWidth: 1, borderRadius: 14, paddingVertical: 14, marginTop: 16, alignItems: 'center' },
-  devButtonText: { fontSize: 14, fontWeight: '800' },
   historyLink: { fontSize: 16, fontWeight: '700', textAlign: 'center', marginTop: 22 },
 });

@@ -414,48 +414,26 @@ export default function LoginScreen({ onLoginSuccess }: { onLoginSuccess?: () =>
         Animated.timing(glowAnim, { toValue: 0.6, duration: 2400, useNativeDriver: true }),
       ])
     ).start();
-  }, []);
+  }, [glowAnim]);
 
   const clearError = useCallback(() => setError(''), []);
 
   // ── Handlers de autenticação ─────────────────────────────────────────────
 
   /**
-   * Google Login
-   * TODO: substituir por Google Sign-In SDK quando disponível.
-   * Por ora chama /auth/login com credenciais demo para não bloquear o fluxo.
+   * Provedores sociais permanecem indisponíveis até existir validação real no backend.
    */
-  const handleGoogleLogin = useCallback(async () => {
-    setLoading(true);
-    clearError();
-    try {
-      // TODO: await GoogleSignIn.signIn() → pegar idToken → enviar ao backend
-      await login('google@teddycash.com', 'google-demo');
-      onLoginSuccess?.();
-    } catch (e: any) {
-      setError(e?.message ?? 'Falha no login com Google. Tente novamente.');
-    } finally {
-      setLoading(false);
-    }
-  }, [login, onLoginSuccess, clearError]);
+  const handleGoogleLogin = useCallback(() => {
+    setError('Login com Google ainda não está disponível. Use e-mail e senha.');
+  }, []);
 
   /**
    * Apple Login
    * TODO: substituir por Apple Authentication SDK.
    */
-  const handleAppleLogin = useCallback(async () => {
-    setLoading(true);
-    clearError();
-    try {
-      // TODO: await AppleAuthentication.signInAsync() → enviar ao backend
-      await login('apple@teddycash.com', 'apple-demo');
-      onLoginSuccess?.();
-    } catch (e: any) {
-      setError(e?.message ?? 'Falha no login com Apple. Tente novamente.');
-    } finally {
-      setLoading(false);
-    }
-  }, [login, onLoginSuccess, clearError]);
+  const handleAppleLogin = useCallback(() => {
+    setError('Login com Apple ainda não está disponível. Use e-mail e senha.');
+  }, []);
 
   /**
    * Email/senha — chama POST /auth/login real
@@ -490,46 +468,26 @@ export default function LoginScreen({ onLoginSuccess }: { onLoginSuccess?: () =>
    * Enviar OTP por SMS
    * TODO: integrar Firebase Phone Auth quando disponível.
    */
-  const handleSendOtp = useCallback(async () => {
+  const handleSendOtp = useCallback(() => {
     const digits = phone.replace(/\D/g, '');
     if (digits.length < 10) {
       setError('Número inválido. Use DDD + número.');
       return;
     }
-    setLoading(true);
-    clearError();
-    try {
-      // TODO: FirebaseAuth.verifyPhoneNumber('+55' + digits)
-      await new Promise((r) => setTimeout(r, 1000)); // placeholder
-      setOtpSent(true);
-    } catch (e: any) {
-      setError(e?.message ?? 'Não foi possível enviar o código. Tente novamente.');
-    } finally {
-      setLoading(false);
-    }
-  }, [phone, clearError]);
+    setError('Login por telefone ainda não está disponível. Use e-mail e senha.');
+  }, [phone]);
 
   /**
    * Verificar OTP
    * TODO: integrar Firebase Phone Auth quando disponível.
    */
-  const handleOtpSubmit = useCallback(async () => {
+  const handleOtpSubmit = useCallback(() => {
     if (otp.length !== 6) {
       setError('Código deve ter 6 dígitos.');
       return;
     }
-    setLoading(true);
-    clearError();
-    try {
-      // TODO: FirebaseAuth.confirmOTP(otp) → trocar pelo fluxo de sessão centralizado.
-      await new Promise((r) => setTimeout(r, 1000)); // placeholder
-      onLoginSuccess?.();
-    } catch (e: any) {
-      setError(e?.message ?? 'Código inválido ou expirado.');
-    } finally {
-      setLoading(false);
-    }
-  }, [otp, onLoginSuccess, clearError]);
+    setError('Login por telefone ainda não está disponível. Use e-mail e senha.');
+  }, [otp]);
 
   // ── Handlers de campo ────────────────────────────────────────────────────
 

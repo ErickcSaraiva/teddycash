@@ -31,7 +31,6 @@ Crie ou mantenha `backend-ts/.env` com:
 
 ```bash
 DATABASE_URL="postgresql://usuario:senha@localhost:5432/catchup"
-GAME_SECRET="troque-este-segredo"
 JWT_SECRET="troque-este-segredo"
 DEMO_PASSWORD="senha-local-opcional"
 DEMO_MACHINE_API_KEY="chave-local-opcional"
@@ -42,13 +41,20 @@ PORT=8000
 ## Endpoints
 
 - `GET /health`
+- `POST /auth/register`
 - `POST /auth/login`
+- `GET /profile`
+- `PATCH /profile`
 - `GET /balance/:userId`
 - `GET /transactions/:userId`
 - `POST /machine-authorizations`
 - `GET /machine-authorizations/:authorizationId`
 - `POST /machine-authorizations/redeem`
 - `GET /wallet`
+- `GET /credit-packages`
+- `POST /payment-orders/pix`
+- `GET /payment-orders`
+- `GET /payment-orders/:orderId`
 - `GET /rewards/daily-checkin`
 - `POST /rewards/daily-checkin`
 - `GET /games`
@@ -113,7 +119,9 @@ npm run db:deploy
 
 Não use `migrate dev`, `db push` ou `migrate reset` em produção. Na Vercel, crie o
 projeto com **Root Directory** `backend-ts` e cadastre `DATABASE_URL`, `JWT_SECRET`,
-`GAME_SECRET` (quando usado), `FRONTEND_URL` e, se necessário, `ALLOWED_ORIGINS` e
+`FRONTEND_URL` e, se necessário, `ALLOWED_ORIGINS`, `GAME_SESSION_TTL_MS` e
 `GAME_DAILY_SESSION_LIMIT`. O fuso das promoções é centralizado em
 `src/config/promotionalRules.ts`. `ALLOWED_ORIGINS` aceita URLs separadas por vírgula. Faça um
 Preview, valide `/health`, login e rotas autenticadas, e só então promova.
+
+`confirmPaidOrder` é atualmente um serviço interno testado de forma idempotente; a integração autenticada com webhook de um provedor Pix real permanece pendente. Nunca aceite confirmação de pagamento enviada pelo aplicativo.

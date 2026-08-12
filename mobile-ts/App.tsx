@@ -1,26 +1,18 @@
 import 'react-native-gesture-handler';
-import React, { useEffect } from 'react';
+import React from 'react';
 import { StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import ApiService from './src/services/api';
 import InicioScreen from './src/screens/Inicio';
 import BalanceScreen from './src/screens/Balance';
 import TransferScreen from './src/screens/Transfer';
 import GamesScreen from './src/screens/Games';
 import ProfileScreen from './src/screens/Profile';
 
-const api = new ApiService();
 const Tab = createBottomTabNavigator();
 
 export default function App() {
-  useEffect(() => {
-    api.getBalance('user1')
-      .then((b) => console.log('balance', b))
-      .catch((e) => console.warn('api error', e));
-  }, []);
-
   return (
     <NavigationContainer>
       <Tab.Navigator

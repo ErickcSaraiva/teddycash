@@ -41,7 +41,7 @@ app.use(economyRoutes);
 app.use('/games', gameRoutes);
 app.use((_req, res) => res.status(404).json({ error: { code: 'ROUTE_NOT_FOUND', message: 'Rota não encontrada.' } }));
 app.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
-  console.error('Unhandled request error:', error instanceof Error ? error.message : 'Unknown error');
+  console.error('Unhandled request error:', error instanceof Error ? error.name : 'UnknownError');
   return res.status(500).json({ error: { code: 'INTERNAL_SERVER_ERROR', message: 'Erro interno do servidor.' } });
 });
 

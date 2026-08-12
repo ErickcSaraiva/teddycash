@@ -1,52 +1,60 @@
-# 🕹️ teddycash: Plataforma de Fidelidade Gamificada
+# TeddyCash
 
-Bem-vindo ao repositório do **teddycash**, um sistema inovador que une a experiência física de máquinas de prémios (gruas/peluches) com um ecossistema digital de fidelidade e gamificação.
+Plataforma TypeScript formada por API Express/Prisma/PostgreSQL e aplicativo Expo/React Native. O produto mantém duas economias independentes:
 
----
+- `creditBalance`: créditos financeiros, adicionados apenas por pagamento confirmado e usados nas máquinas;
+- `teddyCoins`: pontos promocionais de check-in, compras e minijogos, sem conversão em créditos.
 
-## 🚀 O Projeto
+O backend é a fonte oficial de autenticação, saldos, recompensas e históricos. O aplicativo nunca informa `userId` como identidade nem calcula recompensas.
 
-O teddycash transforma a interação tradicional com máquinas de prémios numa experiência conectada. Os utilizadores podem comprar créditos, ganhar cashback e participar em mini-jogos dentro da aplicação, mantendo o envolvimento mesmo fora do local físico.
+## Componentes
 
-### Principais Funcionalidades
+- `backend-ts/`: API, regras econômicas, sessões de jogo, privacidade e schema Prisma.
+- `app-mobile/`: Expo Router para Android e Web.
+- `docs/`: arquitetura, economia, campanhas, privacidade, segurança e roteiros de teste.
+- `mobile-ts/`: código histórico, fora da aplicação Expo ativa.
 
-* **Gestão de Créditos:** Compra de saldo digital para interagir com as máquinas físicas.
-* **Integração Física:** Validação segura através de QR Code para ativar as máquinas (controladas por ESP32).
-* **Sistema de Fidelidade:** Acumulação de cashback a cada transação.
-* **Gamificação:** Mini-jogos integrados na aplicação para retenção e ganho de bónus.
+Consulte [Arquitetura](docs/ARCHITECTURE.md), [Economia](docs/ECONOMY.md), [APIs](backend-ts/README.md), [Expo](app-mobile/README.md) e [Migrations](docs/MIGRATIONS.md).
 
----
+## Ambiente local
 
-## 🛠️ Stack Tecnológica
+Requisitos: Node.js compatível com os lockfiles e PostgreSQL. Não reutilize banco de produção.
 
-Optámos por uma stack unificada em **TypeScript** para garantir maior produtividade e escalabilidade:
+```bash
+cd backend-ts
+npm install
+npx prisma generate
+npx prisma migrate deploy
+npm run dev
+```
 
-* **Backend:** Node.js com TypeScript e Prisma ORM.
-* **Frontend Mobile:** React Native (com Expo) para Android e iOS.
-* **Base de Dados:** PostgreSQL para garantir a segurança e integridade das transações.
-* **Integração de Hardware:** ESP32 (Microcontrolador) para o controlo mecânico.
+Em outro terminal:
 
----
+```bash
+cd app-mobile
+npm install
+npx expo start --clear
+```
 
-## 🏗️ Arquitetura do Sistema
+Configure os nomes listados em `backend-ts/.env.example` e `app-mobile/.env.example`; nunca versione valores reais. No Android físico, `EXPO_PUBLIC_API_BASE` deve usar o IP alcançável do computador, não `localhost`.
 
-1. **App Mobile:** Interface do utilizador para gestão de saldo e jogos.
-2. **API Backend:** Processamento de pagamentos e validação de requisições.
-3. **Hardware (ESP32):** Interface HMI na máquina física que recebe o sinal de autorização via API.
+## Verificação
 
----
+```bash
+cd backend-ts
+npx tsc --noEmit
+npm test
+npx prisma validate
 
-## 📊 Estado do Projeto
+cd ../app-mobile
+npm run typecheck
+npm run lint
+npm test
+CI=1 npm run build:web
+```
 
-- [x] Definição de requisitos e âmbito (MVP).
-- [x] Configuração inicial do ambiente de desenvolvimento.
-- [x] Transição para TypeScript.
-- [x] Implementação da base de dados (PostgreSQL + Prisma).
-- [x] Desenvolvimento dos endpoints de transação.
-- [ ] Prototipagem da interface de jogos.
-- [ ] Integração final com ESP32.
+Testes que mutam dados exigem `RUN_DB_TESTS=1` e uma `DATABASE_URL` exclusiva de testes. Não use `prisma migrate reset`, `db push` ou seed em produção.
 
----
+## Estado e limites
 
-*Desenvolvido por **[Erick Saraiva](https://github.com/ErickcSaraiva)**
-| Full Stack Developer*  © Todos os direitos reservados.
+Caça às TeddyCoins, check-in, temas sazonais e área de privacidade estão implementados. Aprovação/processamento de exclusão, base legal, retenção e estratégia etária ainda exigem decisões operacionais e revisão jurídica. NFC no app representa o canal de autorização por identificador; leitura NFC nativa de hardware não está implementada. Consulte [Validação final](docs/FINAL-VALIDATION.md).
