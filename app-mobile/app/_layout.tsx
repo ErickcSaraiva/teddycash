@@ -26,7 +26,8 @@ const isProtectedRoute =
   rootSegment === 'transactions' ||
   rootSegment === 'coin-collector' ||
   rootSegment === 'add-credits' ||
-  rootSegment === 'payment-order';
+  rootSegment === 'payment-order' ||
+  rootSegment === 'privacy';
 
 if (!token && isProtectedRoute) {
   router.replace('/login');

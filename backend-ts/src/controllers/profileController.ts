@@ -1,116 +1,56 @@
+import { Prisma } from '@prisma/client';
 import type { Response } from 'express';
 import { prisma } from '../config/prisma';
 import type { AuthRequest } from '../middlewares/authMiddleware';
+import { hasActiveConsent, PrivacyDomainError, reauthenticate } from '../services/privacyService';
+import { recordPrivacyAudit } from '../utils/auditLog';
 
-function getParamValue(value: string | string[] | undefined): string | undefined {
-  return Array.isArray(value) ? value[0] : value;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+function error(res: Response, status: number, code: string, message: string) { return res.status(status).json({ error: { code, message } }); }
+function requestedUserId(req: AuthRequest) { const value = req.params.userId; return Array.isArray(value) ? value[0] : value; }
+function authorize(req: AuthRequest, res: Response) {
+  if (!req.userId) { error(res, 401, 'AUTH_REQUIRED', 'Autenticação obrigatória.'); return null; }
+  const requested = requestedUserId(req);
+  if (requested && requested !== req.userId) { error(res, 404, 'PROFILE_NOT_FOUND', 'Perfil não encontrado.'); return null; }
+  return req.userId;
 }
 
-export const getProfile = async (req: AuthRequest, res: Response) => {
-  const userId = getParamValue(req.params.userId);
+export async function getProfile(req: AuthRequest, res: Response) {
+  const userId = authorize(req, res); if (!userId) return;
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, username: true, email: true, avatarUrl: true } });
+  if (!user) return error(res, 404, 'PROFILE_NOT_FOUND', 'Perfil não encontrado.');
+  return res.json({ user_id: user.id, username: user.username, email: user.email, avatarUrl: user.avatarUrl });
+}
 
-  if (!userId) {
-    return res.status(400).json({ error: 'userId is required.' });
-  }
-
-  if (!req.userId || req.userId !== userId) {
-    return res.status(403).json({ error: 'Access denied. You can only view your own profile.' });
-  }
-
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      id: true,
-      username: true,
-      email: true,
-      avatarUrl: true,
-    },
-  });
-
-  if (!user) {
-    return res.status(404).json({ error: 'User not found.' });
-  }
-
-  return res.json({
-    user_id: user.id,
-    username: user.username,
-    email: user.email,
-    avatarUrl: user.avatarUrl,
-  });
-};
-
-export const updateProfile = async (req: AuthRequest, res: Response) => {
-  const userId = getParamValue(req.params.userId);
-  const { username, email, avatarUrl } = req.body;
-
-  if (!userId) {
-    return res.status(400).json({ error: 'userId is required.' });
-  }
-
-  if (!req.userId || req.userId !== userId) {
-    return res.status(403).json({ error: 'Access denied. You can only update your own profile.' });
-  }
-
-  if (
-    username === undefined &&
-    email === undefined &&
-    avatarUrl === undefined
-  ) {
-    return res.status(400).json({ error: 'At least one field must be provided to update.' });
-  }
-
-  const updateData: { username?: string; email?: string; avatarUrl?: string | null } = {};
-
+export async function updateProfile(req: AuthRequest, res: Response) {
+  const userId = authorize(req, res); if (!userId) return;
+  const username = req.body?.username; const email = req.body?.email; const avatarUrl = req.body?.avatarUrl;
+  if (username === undefined && email === undefined && avatarUrl === undefined) return error(res, 400, 'NO_CHANGES', 'Informe ao menos um campo permitido.');
+  const data: { username?: string; email?: string; avatarUrl?: string | null } = {};
   if (username !== undefined) {
-    if (!username || typeof username !== 'string' || username.trim().length < 3) {
-      return res.status(400).json({ error: 'Username must be a string with at least 3 characters.' });
-    }
-    updateData.username = username.trim();
+    if (typeof username !== 'string' || username.trim().length < 3 || username.trim().length > 40) return error(res, 400, 'INVALID_USERNAME', 'Nome de usuário inválido.');
+    data.username = username.trim();
   }
-
   if (email !== undefined) {
-    if (!email || typeof email !== 'string' || !/\S+@\S+\.\S+/.test(email)) {
-      return res.status(400).json({ error: 'A valid email address is required.' });
-    }
-    updateData.email = email.trim().toLowerCase();
+    if (typeof email !== 'string' || !EMAIL_PATTERN.test(email.trim()) || email.length > 254) return error(res, 400, 'INVALID_EMAIL', 'E-mail inválido.');
+    try { await reauthenticate(userId, req.body?.password); }
+    catch (reason) { if (reason instanceof PrivacyDomainError) return error(res, reason.status, reason.code, reason.message); throw reason; }
+    data.email = email.trim().toLowerCase();
   }
-
   if (avatarUrl !== undefined) {
-    if (avatarUrl !== null && typeof avatarUrl !== 'string') {
-      return res.status(400).json({ error: 'avatarUrl must be a string or null.' });
-    }
-    updateData.avatarUrl = avatarUrl === null ? null : avatarUrl.trim();
+    if (avatarUrl !== null && (typeof avatarUrl !== 'string' || avatarUrl.length > 2048 || !/^https:\/\//i.test(avatarUrl))) return error(res, 400, 'INVALID_AVATAR_URL', 'Avatar deve usar uma URL HTTPS válida.');
+    if (avatarUrl && !(await hasActiveConsent(userId, 'PUBLIC_AVATAR_HOSTING'))) return error(res, 409, 'AVATAR_CONSENT_REQUIRED', 'Autorize a hospedagem pública do avatar na área de privacidade.');
+    data.avatarUrl = avatarUrl === null ? null : avatarUrl.trim();
   }
-
-  const duplicateUser = await prisma.user.findFirst({
-    where: {
-      OR: [
-        ...(updateData.username ? [{ username: updateData.username }] : []),
-        ...(updateData.email ? [{ email: updateData.email }] : []),
-      ],
-      NOT: { id: userId },
-    },
-  });
-
-  if (duplicateUser) {
-    return res.status(400).json({ error: 'Username or email already in use by another account.' });
+  try {
+    const updated = await prisma.$transaction(async (tx) => {
+      const user = await tx.user.update({ where: { id: userId }, data, select: { id: true, username: true, email: true, avatarUrl: true } });
+      await recordPrivacyAudit('PROFILE_CORRECTED', userId, 'User', userId, tx); return user;
+    });
+    return res.json({ user_id: updated.id, username: updated.username, email: updated.email, avatarUrl: updated.avatarUrl });
+  } catch (reason) {
+    if (reason instanceof Prisma.PrismaClientKnownRequestError && reason.code === 'P2002') return error(res, 409, 'PROFILE_VALUE_UNAVAILABLE', 'Não foi possível usar os dados informados.');
+    console.error('Profile update failed:', reason instanceof Error ? reason.name : 'UnknownError');
+    return error(res, 500, 'INTERNAL_SERVER_ERROR', 'Não foi possível atualizar o perfil.');
   }
-
-  const updatedUser = await prisma.user.update({
-    where: { id: userId },
-    data: updateData,
-    select: {
-      id: true,
-      username: true,
-      email: true,
-      avatarUrl: true,
-    },
-  });
-
-  return res.json({
-    user_id: updatedUser.id,
-    username: updatedUser.username,
-    email: updatedUser.email,
-    avatarUrl: updatedUser.avatarUrl,
-  });
-};
+}

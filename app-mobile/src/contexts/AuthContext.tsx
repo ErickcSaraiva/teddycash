@@ -19,7 +19,7 @@ interface AuthContextValue extends AuthState {
   logout: () => Promise<void>;
   refreshWallet: () => Promise<Wallet | null>;
   refreshBalance: () => Promise<number | null>;
-  updateProfile: (data: { username?: string; email?: string; avatarUrl?: string | null }) => Promise<void>;
+  updateProfile: (data: { username?: string; email?: string; avatarUrl?: string | null; password?: string }) => Promise<void>;
 }
 const initialState: AuthState = { token: null, userId: null, username: null, email: null, avatarUrl: null, balance: null, teddyCoins: null, loading: true, refreshing: false };
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -101,7 +101,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [persistWallet, state.token]);
   const refreshBalance = useCallback(async () => (await refreshWallet())?.credits ?? null, [refreshWallet]);
 
-  const updateProfile = useCallback(async (data: { username?: string; email?: string; avatarUrl?: string | null }) => {
+  const updateProfile = useCallback(async (data: { username?: string; email?: string; avatarUrl?: string | null; password?: string }) => {
     if (!state.token || !state.userId) throw new Error('Usuário não autenticado.');
     const profile = await authService.updateProfile(state.userId, data);
     if (mounted.current) setState((s) => ({ ...s, username: profile.username, email: profile.email, avatarUrl: profile.avatarUrl ?? null }));

@@ -17,7 +17,7 @@ async function main() {
     },
   });
 
-  console.log('Prisma client ready:', { id: user.id, username: user.username, email: user.email });
+  console.log('Prisma client ready for masked test user.');
 }
 
 main()

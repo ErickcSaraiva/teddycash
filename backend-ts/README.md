@@ -61,6 +61,17 @@ PORT=8000
 - `GET /games/history`
 - `POST /games/:gameId/start`
 - `POST /games/:gameId/complete`
+- `GET /privacy`
+- `POST /privacy/requests/export`
+- `POST /privacy/requests/deletion`
+- `POST /privacy/requests/:requestId/confirm`
+- `POST /privacy/requests/:requestId/cancel`
+- `PUT /privacy/consents`
+
+Com exceção de `/health`, cadastro/login e resgate autenticado pela máquina, as rotas usam JWT. As rotas de privacidade usam apenas a identidade do JWT. Exportação, exclusão,
+consentimentos e alteração de e-mail exigem reautenticação com a senha atual.
+Não existe rota pública para aprovar ou executar anonimização; solicitações confirmadas
+permanecem em revisão até a definição do processo jurídico e operacional.
 
 ## Exemplos
 

@@ -15,8 +15,6 @@ export interface LoginResponse {
 export interface RegisterResponse {
   success: boolean;
   message: string;
-  user_id: string;
-  username: string;
 }
 
 export interface ProfileResponse { user_id: string; username: string; email: string; avatarUrl?: string | null }
@@ -53,11 +51,11 @@ export const authService = {
     }
   },
 
-  getProfile: async (userId: string, token?: string): Promise<ProfileResponse> =>
-    (await api.get<ProfileResponse>(`/profile/${userId}`, token ? { headers: { Authorization: `Bearer ${token}` } } : undefined)).data,
+  getProfile: async (_userId: string, token?: string): Promise<ProfileResponse> =>
+    (await api.get<ProfileResponse>('/profile', token ? { headers: { Authorization: `Bearer ${token}` } } : undefined)).data,
 
-  updateProfile: async (userId: string, body: { username?: string; email?: string; avatarUrl?: string | null }): Promise<ProfileResponse> =>
-    (await api.patch<ProfileResponse>(`/profile/${userId}`, body)).data,
+  updateProfile: async (_userId: string, body: { username?: string; email?: string; avatarUrl?: string | null; password?: string }): Promise<ProfileResponse> =>
+    (await api.patch<ProfileResponse>('/profile', body)).data,
 
   getBalance: async (userId: string): Promise<BalanceResponse> =>
     (await api.get<BalanceResponse>(`/balance/${userId}`)).data,

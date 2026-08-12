@@ -23,8 +23,7 @@ export async function uploadImageAsync(uri: string): Promise<string> {
   });
 
   if (!res.ok) {
-    const txt = await res.text().catch(() => '');
-    throw new Error(`Upload falhou: ${res.status} ${txt}`);
+    throw new Error(`Upload falhou (HTTP ${res.status}).`);
   }
 
   const data = await res.json();

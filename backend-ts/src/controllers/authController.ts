@@ -34,15 +34,16 @@ export const register = async (req: Request, res: Response) => {
       }
     });
 
-    if (existingUser) {
-      return errorResponse(res, 409, 'USER_ALREADY_EXISTS', 'Este e-mail ou nome de usuário já está cadastrado.');
-    }
+    if (existingUser) return res.status(202).json({
+      success: true,
+      message: 'Se os dados puderem ser utilizados, a conta estará disponível para autenticação.',
+    });
 
     // 2. A Mágica da Segurança: Encriptar a password
     const hashedPassword = await bcrypt.hash(password, 12);
 
     // 3. Salvar o novo utilizador no banco de dados
-    const newUser = await prisma.user.create({
+    await prisma.user.create({
       data: {
         username,
         email,
@@ -51,17 +52,15 @@ export const register = async (req: Request, res: Response) => {
     });
 
     // 4. Responder ao aplicativo mobile que deu tudo certo!
-    return res.status(201).json({ 
+    return res.status(202).json({
       success: true, 
-      message: "Conta criada com sucesso!",
-      user_id: newUser.id,
-      username: newUser.username,
+      message: 'Se os dados puderem ser utilizados, a conta estará disponível para autenticação.',
     });
 
   } catch (error: unknown) {
-    console.error("Erro no registro:", error);
+    console.error('Registration failed:', error instanceof Error ? error.name : 'UnknownError');
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-      return errorResponse(res, 409, 'USER_ALREADY_EXISTS', 'Este e-mail ou nome de usuário já está cadastrado.');
+      return res.status(202).json({ success: true, message: 'Se os dados puderem ser utilizados, a conta estará disponível para autenticação.' });
     }
     return errorResponse(res, 500, 'INTERNAL_SERVER_ERROR', 'O servidor encontrou um erro ao criar a conta.');
   }
@@ -83,10 +82,12 @@ export const login = async (req: Request, res: Response) => {
         username: true,
         email: true,
         password: true,
+        sessionVersion: true,
+        privacyStatus: true,
       },
     });
     
-    if (!user) {
+    if (!user || user.privacyStatus === 'ANONYMIZED') {
       return errorResponse(res, 401, 'INVALID_CREDENTIALS', 'E-mail ou senha incorretos.');
     }
 
@@ -100,8 +101,9 @@ export const login = async (req: Request, res: Response) => {
     // 3. Sucesso! Retornar os dados básicos (idealmente, depois adicionaremos um Token JWT aqui)
     const token = jwt.sign(
     {
-        userId: user.id,
-        username: user.username
+      userId: user.id,
+      username: user.username,
+      ver: user.sessionVersion,
     },
     JWT_SECRET,
     {
@@ -116,7 +118,7 @@ return res.status(200).json({
 });
 
   } catch (error: unknown) {
-    console.error("Erro no login:", error);
+    console.error('Login failed:', error instanceof Error ? error.name : 'UnknownError');
     return errorResponse(res, 500, 'INTERNAL_SERVER_ERROR', 'O servidor encontrou um erro ao fazer login.');
   }
 };

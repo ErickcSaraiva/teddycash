@@ -68,7 +68,7 @@ export const createPixPaymentOrder = async (req: AuthRequest, res: Response) => 
       },
     });
   } catch (error) {
-    console.error('Erro ao criar pedido de pagamento:', error);
+    console.error('Payment order creation failed:', error instanceof Error ? error.name : 'UnknownError');
     return res.status(500).json({ error: 'Erro interno ao criar pedido de pagamento.' });
   }
 };

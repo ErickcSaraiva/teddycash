@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import {
-  ActivityIndicator,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -17,6 +16,7 @@ import { useRouter } from 'expo-router';
 import { useTheme } from '@/src/contexts/ThemeContext';
 import { getPalette } from '@/src/theme/palettes';
 import { useAuth } from '@/src/hooks/useAuth';
+import { privacyApi } from '@/src/services/privacyApi';
 
 const DEFAULT_AVATAR = 'https://ui-avatars.com/api/?background=7251e1&color=ffffff&size=128&rounded=true&name=T';
 
@@ -34,6 +34,7 @@ export default function ProfileScreen() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [password, setPassword] = useState('');
 
   const displayAvatar = useMemo(() => {
     if (formAvatarUrl) {
@@ -52,10 +53,11 @@ export default function ProfileScreen() {
     setSuccess(false);
 
     try {
-      const payload: { username?: string; email?: string; avatarUrl?: string | null } = {
+      const payload: { username?: string; email?: string; avatarUrl?: string | null; password?: string } = {
         username: formUsername.trim(),
         email: formEmail.trim(),
       };
+      if (formEmail.trim().toLowerCase() !== (email ?? '').trim().toLowerCase()) payload.password = password;
 
       // Only include avatarUrl when the user provided a value.
       // Leaving the field blank will not clear the existing avatar on the server.
@@ -65,6 +67,7 @@ export default function ProfileScreen() {
 
       await updateProfile(payload);
       setSuccess(true);
+      setPassword('');
       setEditMode(false);
     } catch (err: any) {
       setError(err?.message ?? 'Não foi possível atualizar o perfil.');
@@ -76,6 +79,12 @@ export default function ProfileScreen() {
   const pickAndUploadImage = async () => {
     setError(null);
     try {
+      const privacy = await privacyApi.overview();
+      const avatarConsent = privacy.consent_purposes.find((item) => item.purpose === 'PUBLIC_AVATAR_HOSTING');
+      if (!avatarConsent?.granted) {
+        setError('Autorize primeiro a hospedagem pública do avatar em Privacidade e dados.');
+        return;
+      }
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
         setError('Permissão de acesso à galeria negada.');
@@ -141,6 +150,7 @@ export default function ProfileScreen() {
             placeholderTextColor={palette.softText}
             style={[styles.input, { color: palette.text, backgroundColor: palette.background }]}
           />
+          {editMode ? <Pressable accessibilityRole="button" disabled={uploading} onPress={() => void pickAndUploadImage()} style={[styles.uploadButton, { borderColor: palette.primary }]}><Text style={{ color: palette.primary, fontWeight: '700' }}>{uploading ? 'Enviando…' : 'Escolher imagem (requer consentimento)'}</Text></Pressable> : null}
 
           <Text style={[styles.label, { color: palette.softText }]}>E-mail</Text>
           <TextInput
@@ -164,6 +174,10 @@ export default function ProfileScreen() {
             autoCapitalize="none"
             style={[styles.input, { color: palette.text, backgroundColor: palette.background }]}
           />
+          {editMode && formEmail.trim().toLowerCase() !== (email ?? '').trim().toLowerCase() ? <>
+            <Text style={[styles.label, { color: palette.softText }]}>Senha atual para alterar o e-mail</Text>
+            <TextInput secureTextEntry value={password} onChangeText={setPassword} autoComplete="current-password" placeholder="Senha atual" placeholderTextColor={palette.softText} style={[styles.input, { color: palette.text, backgroundColor: palette.background }]} />
+          </> : null}
 
           {error ? <Text style={[styles.error, { color: '#E74C3C' }]}>{error}</Text> : null}
           {success ? <Text style={[styles.success, { color: palette.primary }]}>Perfil atualizado com sucesso</Text> : null}
@@ -188,6 +202,14 @@ export default function ProfileScreen() {
               </Pressable>
             ) : null}
           </View>
+
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => router.push('/privacy' as never)}
+            style={[styles.logoutButton, { borderColor: palette.accent }]}
+          >
+            <Text style={[styles.logoutText, { color: palette.accent }]}>Privacidade e dados</Text>
+          </Pressable>
 
           <Pressable
             onPress={logout}
@@ -255,6 +277,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logoutText: { fontSize: 14, fontWeight: '700' },
+  uploadButton: { minHeight: 44, borderWidth: 1, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginTop: -8, marginBottom: 18, paddingHorizontal: 10 },
   error: { marginBottom: 12, fontSize: 14 },
   success: { marginBottom: 12, fontSize: 14 },
 });

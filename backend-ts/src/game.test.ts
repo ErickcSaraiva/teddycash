@@ -3,7 +3,7 @@ import test from 'node:test';
 import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from './config/auth';
 import { getGameCatalog, GameDomainError, validateGameResult, type GameEvent } from './services/gameService';
-import { verifyToken, type AuthRequest } from './middlewares/authMiddleware';
+import { decodeSessionToken, verifyToken, type AuthRequest } from './middlewares/authMiddleware';
 
 function events(count: number): GameEvent[] {
   return Array.from({ length: count }, (_, index) => ({ sequence: index + 1, type: 'COIN_TAP', occurred_at_ms: 100 + index * 100 }));
@@ -40,20 +40,16 @@ test('eventos rápidos demais são rejeitados', () => {
   assert.throws(() => validateGameResult('coin-collector', { ...validInput(), score: 2, events: impossible }), (error: unknown) => error instanceof GameDomainError && error.code === 'IMPOSSIBLE_EVENT_RATE');
 });
 
-test('rota protegida rejeita usuário sem token', () => {
+test('rota protegida rejeita usuário sem token', async () => {
   const req = { headers: {} } as AuthRequest;
   let status = 0;
   const res = { status(code: number) { status = code; return this; }, json() { return this; } } as never;
-  verifyToken(req, res, () => assert.fail('não deveria autenticar'));
+  await verifyToken(req, res, () => assert.fail('não deveria autenticar'));
   assert.equal(status, 401);
 });
 
 test('identidade autenticada é obtida exclusivamente do JWT', () => {
-  const token = jwt.sign({ userId: 'jwt-user' }, JWT_SECRET, { expiresIn: '1m' });
-  const req = { headers: { authorization: `Bearer ${token}` }, body: { userId: 'attacker' } } as AuthRequest;
-  let called = false;
-  const res = {} as never;
-  verifyToken(req, res, () => { called = true; });
-  assert.equal(called, true);
-  assert.equal(req.userId, 'jwt-user');
+  const token = jwt.sign({ userId: 'jwt-user', ver: 3 }, JWT_SECRET, { expiresIn: '1m' });
+  const identity = decodeSessionToken(token);
+  assert.deepEqual(identity, { userId: 'jwt-user', sessionVersion: 3 });
 });

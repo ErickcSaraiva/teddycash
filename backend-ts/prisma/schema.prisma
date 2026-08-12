@@ -11,22 +11,92 @@ datasource db {
 
 // Usuários, créditos financeiros, cashback legado e TeddyCoins promocionais.
 model User {
-  id            String   @id @default(uuid())
-  username      String   @unique
-  email         String   @unique
-  password      String
-  avatarUrl     String?
-  creditBalance Int      @default(0)
-  cashback      Float    @default(0.0)
-  teddyCoins    Int      @default(0)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id             String            @id @default(uuid())
+  username       String            @unique
+  email          String            @unique
+  password       String
+  avatarUrl      String?
+  creditBalance  Int               @default(0)
+  cashback       Float             @default(0.0)
+  teddyCoins     Int               @default(0)
+  sessionVersion Int               @default(0)
+  privacyStatus  UserPrivacyStatus @default(ACTIVE)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
 
   transactions          Transaction[]
   gameSessions          GameSession[]
   authorizations        MachineAuthorization[]
   paymentOrders         PaymentOrder[]
   teddyCoinTransactions TeddyCoinTransaction[]
+  privacyRequests       PrivacyRequest[]
+  privacyConsents       PrivacyConsent[]
+}
+
+enum UserPrivacyStatus {
+  ACTIVE
+  DELETION_PENDING
+  ANONYMIZED
+}
+
+enum PrivacyRequestType {
+  EXPORT
+  DELETION
+}
+
+enum PrivacyRequestStatus {
+  AWAITING_CONFIRMATION
+  PENDING_REVIEW
+  APPROVED
+  PROCESSING
+  COMPLETED
+  REJECTED
+  CANCELLED
+}
+
+model PrivacyRequest {
+  id                 String               @id @default(uuid())
+  userId             String
+  type               PrivacyRequestType
+  status             PrivacyRequestStatus
+  noticeVersion      String
+  decisionReasonCode String?
+  requestedAt        DateTime             @default(now())
+  confirmedAt        DateTime?
+  processedAt        DateTime?
+  cancelledAt        DateTime?
+  updatedAt          DateTime             @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, requestedAt])
+  @@index([status, requestedAt])
+}
+
+model PrivacyConsent {
+  id            String    @id @default(uuid())
+  userId        String
+  purpose       String
+  version       String
+  noticeVersion String
+  grantedAt     DateTime  @default(now())
+  revokedAt     DateTime?
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, purpose, grantedAt])
+}
+
+model PrivacyAuditLog {
+  id         String   @id @default(uuid())
+  actorHash  String
+  action     String
+  targetType String
+  targetHash String?
+  occurredAt DateTime @default(now())
+
+  @@index([actorHash, occurredAt])
+  @@index([action, occurredAt])
 }
 
 enum CreditTransactionType {
