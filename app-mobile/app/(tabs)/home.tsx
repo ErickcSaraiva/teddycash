@@ -6,10 +6,11 @@ import { getPalette } from '@/src/theme/palettes';
 import { useAuth } from '@/src/hooks/useAuth';
 import { claimDailyCheckin, getDailyCheckinStatus, type CheckinState } from '@/src/services/economyApi';
 import { formatNextCheckin } from '@/src/services/checkinApiCore';
+import { SeasonalCampaignBanner } from '@/src/componentes/dashboard/SeasonalCampaignBanner';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { theme } = useTheme();
+  const { theme, campaign, reduceMotion, isCampaignPreview } = useTheme();
   const palette = getPalette(theme);
   const { username, balance, teddyCoins, refreshWallet, refreshing } = useAuth();
   const [checkingIn, setCheckingIn] = useState(false);
@@ -45,6 +46,12 @@ export default function HomeScreen() {
   return <ScrollView style={[styles.container, { backgroundColor: palette.background }]} contentContainerStyle={styles.content}>
     <Text style={[styles.brand, { color: palette.primary }]}>🧸 TeddyCash</Text>
     <Text style={[styles.title, { color: palette.text }]}>Olá, {username ?? 'Usuário'} 👋</Text>
+    <SeasonalCampaignBanner
+      campaign={campaign}
+      reduceMotion={reduceMotion}
+      isPreview={isCampaignPreview}
+      onCallToAction={campaign.callToAction ? () => router.push(campaign.callToAction!.route) : undefined}
+    />
     <View style={[styles.wallet, { backgroundColor: palette.card }]}>
       <View><Text style={[styles.label, { color: palette.softText }]}>Créditos</Text><Text style={[styles.value, { color: palette.primary }]}>{balance ?? '—'}</Text></View>
       <View><Text style={[styles.label, { color: palette.softText }]}>TeddyCoins</Text><Text style={[styles.value, { color: palette.accent }]}>🪙 {teddyCoins ?? '—'}</Text></View>

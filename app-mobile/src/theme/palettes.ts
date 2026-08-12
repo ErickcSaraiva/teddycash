@@ -18,17 +18,6 @@ export const palettes: Record<string, ThemePalette> = {
     primary: '#8257E5',    // O Roxo vibrante (usado no topo e no link "Criar agora")
     accent: '#FFB800',     // Amarelo/Dourado (Para as moedas e detalhes do Teddy)
     border: '#323238',     // Linhas sutis, como a da divisão "ou"
-  },
-  
-  // Tema de Natal (mantido para o seu sistema de Live-Ops)
-  christmas: {
-    background: '#180A0A', // Um fundo escuro mais avermelhado
-    text: '#FFFFFF',
-    card: '#2A1616',
-    softText: '#A08080',
-    primary: '#E53935',    // Vermelho Natal
-    accent: '#43A047',     // Verde Árvore
-    border: '#3D2020',
   }
 };
 
