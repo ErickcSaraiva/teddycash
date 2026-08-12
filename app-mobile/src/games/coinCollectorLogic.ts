@@ -1,6 +1,8 @@
 export const COIN_COLLECTOR_DURATION_MS = 30_000;
 export const MINIMUM_TAP_INTERVAL_MS = 80;
 export const TARGET_SIZE = 68;
+export const MAXIMUM_SCORE = 100;
+export const MAXIMUM_EVENTS = 120;
 
 export type TargetKind = 'REWARD' | 'OBSTACLE';
 export type Target = { id: number; kind: TargetKind; emoji: string; x: number; y: number };
@@ -22,6 +24,7 @@ export function createTarget(random: () => number, width: number, height: number
 }
 
 export function registerTap(score: number, events: GameEvent[], target: Target, occurredAtMs: number) {
+  if (events.length >= MAXIMUM_EVENTS || (target.kind === 'REWARD' && score >= MAXIMUM_SCORE)) return { accepted: false, score, events };
   const lastTime = events.at(-1)?.occurred_at_ms ?? -MINIMUM_TAP_INTERVAL_MS;
   if (occurredAtMs - lastTime < MINIMUM_TAP_INTERVAL_MS) return { accepted: false, score, events };
   const event: GameEvent = {

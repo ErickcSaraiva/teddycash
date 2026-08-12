@@ -12,19 +12,21 @@ import { AuthProvider, useAuth } from '@/src/contexts/AuthContext';
 function AppNavigator() {
   const { token, loading } = useAuth();
   const segments = useSegments();
+  const rootSegment = segments[0] as string | undefined;
   const router = useRouter();
 
   useEffect(() => {
     if (loading) return;
-    const isAuthRoute = segments[0] === 'login' || segments[0] === 'register';
+    const isAuthRoute = rootSegment === 'login' || rootSegment === 'register';
 
 const isProtectedRoute =
-  segments[0] === '(tabs)' ||
-  segments[0] === 'transfer' ||
-  segments[0] === 'transfer-confirm' ||
-  segments[0] === 'transactions' ||
-  segments[0] === 'add-credits' ||
-  segments[0] === 'payment-order';
+  rootSegment === '(tabs)' ||
+  rootSegment === 'transfer' ||
+  rootSegment === 'transfer-confirm' ||
+  rootSegment === 'transactions' ||
+  rootSegment === 'coin-collector' ||
+  rootSegment === 'add-credits' ||
+  rootSegment === 'payment-order';
 
 if (!token && isProtectedRoute) {
   router.replace('/login');
@@ -36,7 +38,7 @@ if (token && isAuthRoute) {
   return;
 }
 
-  }, [token, loading, segments, router]);
+  }, [token, loading, rootSegment, router]);
 
   if (loading) {
     return <View style={styles.loading}><ActivityIndicator size="large" color="#7C5CFC" /><Text style={styles.loadingText}>Carregando sua sessão...</Text></View>;
