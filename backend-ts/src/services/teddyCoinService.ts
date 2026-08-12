@@ -1,4 +1,4 @@
-import { Prisma, TeddyCoinTransactionType } from '@prisma/client';
+import { Prisma, TeddyCoinTransactionSource, TeddyCoinTransactionType } from '@prisma/client';
 import { prisma } from '../config/prisma';
 
 export class InsufficientTeddyCoinsError extends Error {
@@ -11,7 +11,8 @@ type MovementInput = {
   userId: string;
   amount: number;
   type: TeddyCoinTransactionType;
-  referenceId?: string;
+  source: TeddyCoinTransactionSource;
+  referenceId: string;
   description?: string;
 };
 
@@ -21,12 +22,11 @@ function validateAmount(amount: number) {
 
 export async function creditTeddyCoinsInTransaction(tx: Prisma.TransactionClient, input: MovementInput) {
   validateAmount(input.amount);
-  if (input.referenceId) {
-    const existing = await tx.teddyCoinTransaction.findUnique({
-      where: { userId_type_referenceId: { userId: input.userId, type: input.type, referenceId: input.referenceId } },
-    });
-    if (existing) return existing;
-  }
+  if (!input.referenceId.trim()) throw new Error('TeddyCoin referenceId is required.');
+  const existing = await tx.teddyCoinTransaction.findUnique({
+    where: { userId_type_referenceId: { userId: input.userId, type: input.type, referenceId: input.referenceId } },
+  });
+  if (existing) return existing;
 
   const user = await tx.user.update({
     where: { id: input.userId },
@@ -40,12 +40,11 @@ export async function creditTeddyCoinsInTransaction(tx: Prisma.TransactionClient
 
 export async function debitTeddyCoinsInTransaction(tx: Prisma.TransactionClient, input: MovementInput) {
   validateAmount(input.amount);
-  if (input.referenceId) {
-    const existing = await tx.teddyCoinTransaction.findUnique({
-      where: { userId_type_referenceId: { userId: input.userId, type: input.type, referenceId: input.referenceId } },
-    });
-    if (existing) return existing;
-  }
+  if (!input.referenceId.trim()) throw new Error('TeddyCoin referenceId is required.');
+  const existing = await tx.teddyCoinTransaction.findUnique({
+    where: { userId_type_referenceId: { userId: input.userId, type: input.type, referenceId: input.referenceId } },
+  });
+  if (existing) return existing;
 
   const debit = await tx.user.updateMany({
     where: { id: input.userId, teddyCoins: { gte: input.amount } },

@@ -58,7 +58,7 @@ export async function confirmPaidOrder(orderId: string, providerId: string) {
     const pkg = getCreditPackageByCode(order.packageCode);
     const teddyMovement = order.teddyCoins > 0
       ? await creditTeddyCoinsInTransaction(tx, {
-          userId: order.userId, amount: order.teddyCoins, type: 'CREDIT_PURCHASE_REWARD', referenceId: order.id,
+          userId: order.userId, amount: order.teddyCoins, type: 'CREDIT_PURCHASE_REWARD', source: 'PAYMENT_ORDER', referenceId: order.id,
           description: `Bônus da compra ${pkg?.name ?? order.packageCode}`,
         })
       : null;

@@ -114,15 +114,25 @@ enum TeddyCoinTransactionType {
   ADMIN_ADJUSTMENT
 }
 
+enum TeddyCoinTransactionSource {
+  CHECK_IN
+  PAYMENT_ORDER
+  GAME_SESSION
+  CAMPAIGN
+  ADMIN
+  LEGACY
+}
+
 model TeddyCoinTransaction {
-  id           String                   @id @default(uuid())
+  id           String                     @id @default(uuid())
   userId       String
   type         TeddyCoinTransactionType
+  source       TeddyCoinTransactionSource @default(LEGACY)
   amount       Int
   balanceAfter Int
   referenceId  String?
   description  String?
-  createdAt    DateTime                 @default(now())
+  createdAt    DateTime                   @default(now())
 
   user User @relation(fields: [userId], references: [id])
 

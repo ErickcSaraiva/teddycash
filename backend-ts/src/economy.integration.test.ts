@@ -14,7 +14,7 @@ test('economia transacional completa', { skip: !runDatabaseTests }, async () => 
   ]);
   const ids = users.map((user) => user.id);
   try {
-    const order = await prisma.paymentOrder.create({ data: { userId: ids[0], packageCode: 'ADVANTAGE', amountCents: 1500, credits: 5, teddyCoins: 80, expiresAt: new Date(Date.now() + 60_000) } });
+    const order = await prisma.paymentOrder.create({ data: { userId: ids[0], packageCode: 'ADVANTAGE', amountCents: 1500, credits: 5, teddyCoins: 50, expiresAt: new Date(Date.now() + 60_000) } });
     let buyer = await prisma.user.findUniqueOrThrow({ where: { id: ids[0] } });
     assert.equal(buyer.creditBalance, 0, 'PENDING não altera créditos');
     assert.equal(buyer.teddyCoins, 0, 'PENDING não altera TeddyCoins');
@@ -23,14 +23,22 @@ test('economia transacional completa', { skip: !runDatabaseTests }, async () => 
     await confirmPaidOrder(order.id, `provider-${suffix}`);
     buyer = await prisma.user.findUniqueOrThrow({ where: { id: ids[0] } });
     assert.equal(buyer.creditBalance, 5);
-    assert.equal(buyer.teddyCoins, 80, 'confirmação idempotente');
+    assert.equal(buyer.teddyCoins, 50, 'bônus de 10 por crédito e confirmação idempotente');
 
-    const checkin = await claimDailyCheckin(ids[0]);
-    assert.equal(checkin.movement.balanceAfter, 90);
-    await assert.rejects(() => claimDailyCheckin(ids[0]));
+    const beforeCheckinCredits = buyer.creditBalance;
+    const [checkin, simultaneous] = await Promise.all([claimDailyCheckin(ids[0]), claimDailyCheckin(ids[0])]);
+    assert.equal(checkin.movement.balanceAfter, 60);
+    assert.equal(simultaneous.movement.balanceAfter, 60);
+    assert.notEqual(checkin.idempotent, simultaneous.idempotent, 'somente uma requisição cria o movimento');
+    const repeated = await claimDailyCheckin(ids[0]);
+    assert.equal(repeated.idempotent, true);
+    buyer = await prisma.user.findUniqueOrThrow({ where: { id: ids[0] } });
+    assert.equal(buyer.creditBalance, beforeCheckinCredits, 'check-in não altera créditos financeiros');
+    assert.equal(await prisma.teddyCoinTransaction.count({ where: { userId: ids[0], type: 'DAILY_CHECKIN' } }), 1);
 
     const movements = await prisma.teddyCoinTransaction.findMany({ where: { userId: ids[0] }, orderBy: { createdAt: 'asc' } });
-    assert.deepEqual(movements.map((item) => item.balanceAfter), [80, 90]);
+    assert.deepEqual(movements.map((item) => item.balanceAfter), [50, 60]);
+    assert.deepEqual(movements.map((item) => item.source), ['PAYMENT_ORDER', 'CHECK_IN']);
     const creditMovements = await prisma.transaction.findMany({ where: { userId: ids[0] } });
     assert.deepEqual(creditMovements.map((item) => ({ amount: item.amount, source: item.source, referenceId: item.referenceId })), [
       { amount: 5, source: 'PAYMENT_ORDER', referenceId: order.id },

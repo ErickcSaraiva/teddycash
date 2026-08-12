@@ -164,7 +164,7 @@ export async function completeGameSession(userId: string, gameId: string, input:
       },
     });
     const movement = validated.reward > 0 ? await creditTeddyCoinsInTransaction(tx, {
-      userId, amount: validated.reward, type: 'GAME_REWARD', referenceId: session.id,
+      userId, amount: validated.reward, type: 'GAME_REWARD', source: 'GAME_SESSION', referenceId: session.id,
       description: `Recompensa do jogo ${gameId}`,
     }) : null;
     const user = movement ? null : await tx.user.findUniqueOrThrow({ where: { id: userId }, select: { teddyCoins: true } });

@@ -31,13 +31,13 @@ export const GAME_CATALOG = {
     minimumDurationMs: 28_000,
     maximumDurationMs: 40_000,
     sessionTtlMs: positiveIntegerEnv('GAME_SESSION_TTL_MS', 2 * 60_000),
-    dailySessionLimit: positiveIntegerEnv('GAME_DAILY_SESSION_LIMIT', 5),
+    dailySessionLimit: positiveIntegerEnv('GAME_DAILY_SESSION_LIMIT', PROMOTIONAL_RULES.games['coin-collector'].dailySessionLimit),
     maximumScore: 100,
     maximumEvents: 120,
     minimumEventIntervalMs: 80,
-    coinsPerScore: 1,
-    maximumReward: 50,
-    active: true,
+    coinsPerScore: PROMOTIONAL_RULES.games['coin-collector'].coinsPerScore,
+    maximumReward: PROMOTIONAL_RULES.games['coin-collector'].maximumReward,
+    active: PROMOTIONAL_RULES.games['coin-collector'].active,
   },
 } as const satisfies Record<GameId, GameDefinition>;
 
@@ -50,3 +50,4 @@ export function getGameDefinition(gameId: string): GameDefinition | null {
 export function listActiveGames(): GameDefinition[] {
   return Object.values(GAME_CATALOG).filter((game) => game.active);
 }
+import { PROMOTIONAL_RULES } from '../config/promotionalRules';

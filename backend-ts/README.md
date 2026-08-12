@@ -49,6 +49,8 @@ PORT=8000
 - `GET /machine-authorizations/:authorizationId`
 - `POST /machine-authorizations/redeem`
 - `GET /wallet`
+- `GET /rewards/daily-checkin`
+- `POST /rewards/daily-checkin`
 - `GET /games`
 - `GET /games/history`
 - `POST /games/:gameId/start`
@@ -112,5 +114,6 @@ npm run db:deploy
 Não use `migrate dev`, `db push` ou `migrate reset` em produção. Na Vercel, crie o
 projeto com **Root Directory** `backend-ts` e cadastre `DATABASE_URL`, `JWT_SECRET`,
 `GAME_SECRET` (quando usado), `FRONTEND_URL` e, se necessário, `ALLOWED_ORIGINS` e
-`REWARDS_TIME_ZONE`. `ALLOWED_ORIGINS` aceita URLs separadas por vírgula. Faça um
+`GAME_DAILY_SESSION_LIMIT`. O fuso das promoções é centralizado em
+`src/config/promotionalRules.ts`. `ALLOWED_ORIGINS` aceita URLs separadas por vírgula. Faça um
 Preview, valide `/health`, login e rotas autenticadas, e só então promova.
