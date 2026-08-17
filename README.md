@@ -58,3 +58,9 @@ Testes que mutam dados exigem `RUN_DB_TESTS=1` e uma `DATABASE_URL` exclusiva de
 ## Estado e limites
 
 Caça às TeddyCoins, check-in, temas sazonais e área de privacidade estão implementados. Aprovação/processamento de exclusão, base legal, retenção e estratégia etária ainda exigem decisões operacionais e revisão jurídica. NFC no app representa o canal de autorização por identificador; leitura NFC nativa de hardware não está implementada. Consulte [Validação final](docs/FINAL-VALIDATION.md).
+
+## 👨‍💻 Desenvolvedor
+Desenvolvido por **Erick Saraiva** (GitHub: [@ErickcSaraiva](https://github.com/ErickcSaraiva))
+
+## 📄 Licença e Direitos Autorais
+Copyright ® Erick Saraiva 2026
