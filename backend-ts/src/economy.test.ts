@@ -19,6 +19,9 @@ test('regras promocionais ficam centralizadas e calculam 10 TeddyCoins por créd
   assert.equal(PROMOTIONAL_RULES.dailyCheckin.reward, 10);
   assert.equal(purchaseBonusForCredits(1), 10);
   assert.equal(purchaseBonusForCredits(10), 100);
+  assert.deepEqual(PROMOTIONAL_RULES.rewardCatalog.creditRedemption, {
+    id: 'credit-redemption', active: true, teddyCoinCost: 500, creditReward: 1,
+  });
 });
 
 test('dia de check-in usa America/Manaus e próxima fronteira local', () => {

@@ -32,3 +32,5 @@ build/
 *.log
 /generated/prisma
 .expo/
+.vercel
+.env*

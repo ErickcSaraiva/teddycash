@@ -25,3 +25,4 @@ export const loginRateLimit = createSecurityRateLimiter(10, 15 * 60_000, 'login'
 export const registerRateLimit = createSecurityRateLimiter(5, 60 * 60_000, 'register');
 export const privacyReadRateLimit = createSecurityRateLimiter(60, 60_000, 'privacy-read', true);
 export const privacySensitiveRateLimit = createSecurityRateLimiter(5, 15 * 60_000, 'privacy-sensitive', true);
+export const rewardRedemptionRateLimit = createSecurityRateLimiter(10, 60_000, 'reward-redemption', true);

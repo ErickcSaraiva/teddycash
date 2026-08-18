@@ -10,6 +10,14 @@ export const PROMOTIONAL_RULES = {
     active: true,
     teddyCoinsPerCredit: 10,
   },
+  rewardCatalog: {
+    creditRedemption: {
+      id: 'credit-redemption',
+      active: true,
+      teddyCoinCost: 500,
+      creditReward: 1,
+    },
+  },
   games: {
     'coin-collector': {
       active: true,

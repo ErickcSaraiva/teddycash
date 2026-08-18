@@ -1,33 +1,52 @@
-// Simple Cloudinary upload helper. Configure the following env vars in Expo:
-// EXPO_PUBLIC_CLOUDINARY_NAME and EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET
-export async function uploadImageAsync(uri: string): Promise<string> {
-  const CLOUD_NAME = process.env.EXPO_PUBLIC_CLOUDINARY_NAME;
-  const UPLOAD_PRESET = process.env.EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+// Secure upload via backend: App -> Backend (authenticated) -> Cloudinary
+import { authService } from './auth';
+import { API_BASE_URL } from '@/src/config/api';
+import type { ImagePickerAsset } from 'expo-image-picker';
 
-  if (!CLOUD_NAME || !UPLOAD_PRESET) {
-    throw new Error('Cloudinary não configurado. Defina EXPO_PUBLIC_CLOUDINARY_NAME e EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET');
-  }
+function getUploadName(asset: ImagePickerAsset): string {
+  if (asset.fileName) return asset.fileName;
+  const extension = asset.mimeType?.split('/')[1]?.replace('jpeg', 'jpg') ?? 'jpg';
+  return `avatar.${extension}`;
+}
 
-  // Fetch the local file as a blob
-  const response = await fetch(uri);
-  const blob = await response.blob();
+export async function uploadImageAsync(asset: ImagePickerAsset): Promise<string> {
+  const token = await authService.getStoredToken();
+  if (!token) throw new Error('Usuário não autenticado.');
+  if (!API_BASE_URL) throw new Error('API não configurada.');
 
   const form = new FormData();
-  // @ts-ignore - React Native FormData accepts blob
-  form.append('file', blob);
-  form.append('upload_preset', UPLOAD_PRESET);
-
-  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
-    method: 'POST',
-    body: form as any,
-  });
-
-  if (!res.ok) {
-    throw new Error(`Upload falhou (HTTP ${res.status}).`);
+  if (asset.file) {
+    // Browsers expose the selected image as a File.
+    form.append('avatar', asset.file, getUploadName(asset));
+  } else {
+    // React Native reads the local file URI while serializing the multipart body.
+    // Fetching a file:// URI first is unreliable and results in "Network request failed".
+    form.append('avatar', {
+      uri: asset.uri,
+      name: getUploadName(asset),
+      type: asset.mimeType ?? 'image/jpeg',
+    } as any);
   }
 
-  const data = await res.json();
-  return data.secure_url as string;
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}/profile/avatar`, {
+      method: 'POST',
+      body: form,
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  } catch {
+    throw new Error(`Não foi possível conectar ao servidor (${API_BASE_URL}). Verifique se o celular e o computador estão na mesma rede.`);
+  }
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => null) as { error?: { message?: string } } | null;
+    throw new Error(data?.error?.message ?? `Falha no upload (HTTP ${response.status}).`);
+  }
+
+  const data = await response.json() as { avatarUrl?: string };
+  if (!data.avatarUrl) throw new Error('O servidor não retornou a URL do avatar.');
+  return data.avatarUrl;
 }
 
 export default uploadImageAsync;

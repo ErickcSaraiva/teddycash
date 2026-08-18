@@ -57,6 +57,8 @@ PORT=8000
 - `GET /payment-orders/:orderId`
 - `GET /rewards/daily-checkin`
 - `POST /rewards/daily-checkin`
+- `GET /rewards/catalog`
+- `POST /rewards/redeem-credit` (`Idempotency-Key` obrigatório)
 - `GET /games`
 - `GET /games/history`
 - `POST /games/:gameId/start`
@@ -109,7 +111,7 @@ A autorizacao expira em dois minutos. Criar uma nova cancela a anterior do mesmo
 o resgate usa uma transacao atomica e cada token so pode ser consumido uma vez. Nenhum
 credito e debitado na criacao: saldo e historico mudam apenas quando a maquina confirma.
 
-Créditos só podem ser adicionados após a confirmação idempotente de um pedido de pagamento. TeddyCoins são promocionais e não podem ser convertidas em créditos ou transferidas para máquinas. Consulte `../docs/ECONOMY.md`.
+Créditos de compra só são adicionados após confirmação idempotente do pagamento. O catálogo promocional também permite resgatar 500 TeddyCoins por 1 crédito de jogada em transação atômica. TeddyCoins não são transferidas diretamente para máquinas. Consulte `../docs/ECONOMY.md`.
 
 ## Observacoes de QA
 

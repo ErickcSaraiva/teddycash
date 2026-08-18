@@ -48,21 +48,23 @@ export default function ProfileScreen() {
 
   const onSave = async () => {
     if (!userId) return;
+    if (loading || uploading) return;
     setLoading(true);
     setError(null);
     setSuccess(false);
 
     try {
-      const payload: { username?: string; email?: string; avatarUrl?: string | null; password?: string } = {
-        username: formUsername.trim(),
-        email: formEmail.trim(),
-      };
-      if (formEmail.trim().toLowerCase() !== (email ?? '').trim().toLowerCase()) payload.password = password;
+      const payload: { username?: string; email?: string; avatarUrl?: string | null; password?: string } = {};
+      if (formUsername.trim() !== (username ?? '').trim()) payload.username = formUsername.trim();
+      if (formEmail.trim().toLowerCase() !== (email ?? '').trim().toLowerCase()) {
+        payload.email = formEmail.trim();
+        payload.password = password;
+      }
+      if (formAvatarUrl.trim() !== '' && formAvatarUrl.trim() !== (avatarUrl ?? '').trim()) payload.avatarUrl = formAvatarUrl.trim();
 
-      // Only include avatarUrl when the user provided a value.
-      // Leaving the field blank will not clear the existing avatar on the server.
-      if (formAvatarUrl.trim() !== '') {
-        payload.avatarUrl = formAvatarUrl.trim();
+      if (Object.keys(payload).length === 0) {
+        setError('Nenhuma alteração detectada.');
+        return;
       }
 
       await updateProfile(payload);
@@ -92,17 +94,16 @@ export default function ProfileScreen() {
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         allowsEditing: true,
         quality: 0.8,
       });
 
-      // compat com diferentes SDKs
-      const uri = (result as any).assets?.[0]?.uri ?? (result as any).uri;
-      if (!uri) return;
+      if (result.canceled || !result.assets[0]) return;
 
       setUploading(true);
-      const uploadedUrl = await uploadImageAsync(uri);
+      const uploadedUrl = await uploadImageAsync(result.assets[0]);
+      await updateProfile({ avatarUrl: uploadedUrl });
       setFormAvatarUrl(uploadedUrl);
       setSuccess(true);
     } catch (err: any) {
@@ -150,8 +151,6 @@ export default function ProfileScreen() {
             placeholderTextColor={palette.softText}
             style={[styles.input, { color: palette.text, backgroundColor: palette.background }]}
           />
-          {editMode ? <Pressable accessibilityRole="button" disabled={uploading} onPress={() => void pickAndUploadImage()} style={[styles.uploadButton, { borderColor: palette.primary }]}><Text style={{ color: palette.primary, fontWeight: '700' }}>{uploading ? 'Enviando…' : 'Escolher imagem (requer consentimento)'}</Text></Pressable> : null}
-
           <Text style={[styles.label, { color: palette.softText }]}>E-mail</Text>
           <TextInput
             value={formEmail}
@@ -164,16 +163,18 @@ export default function ProfileScreen() {
             style={[styles.input, { color: palette.text, backgroundColor: palette.background }]}
           />
 
-          <Text style={[styles.label, { color: palette.softText }]}>Avatar URL</Text>
-          <TextInput
-            value={formAvatarUrl}
-            onChangeText={setFormAvatarUrl}
-            editable={editMode}
-            placeholder="https://..."
-            placeholderTextColor={palette.softText}
-            autoCapitalize="none"
-            style={[styles.input, { color: palette.text, backgroundColor: palette.background }]}
-          />
+          {editMode ? (
+            <Pressable
+              accessibilityRole="button"
+              disabled={uploading}
+              onPress={() => void pickAndUploadImage()}
+              style={[styles.uploadButton, { borderColor: palette.primary }]}
+            >
+              <Text style={{ color: palette.primary, fontWeight: '700' }}>
+                {uploading ? 'Enviando imagem…' : 'Escolher imagem'}
+              </Text>
+            </Pressable>
+          ) : null}
           {editMode && formEmail.trim().toLowerCase() !== (email ?? '').trim().toLowerCase() ? <>
             <Text style={[styles.label, { color: palette.softText }]}>Senha atual para alterar o e-mail</Text>
             <TextInput secureTextEntry value={password} onChangeText={setPassword} autoComplete="current-password" placeholder="Senha atual" placeholderTextColor={palette.softText} style={[styles.input, { color: palette.text, backgroundColor: palette.background }]} />

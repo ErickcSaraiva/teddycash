@@ -6,6 +6,7 @@ A fonte oficial fica em `backend-ts/src/config/promotionalRules.ts`. O mobile ap
 
 - Check-in diário: 10 TeddyCoins, uma vez por dia em `America/Manaus`.
 - Bônus de compra: 10 TeddyCoins por crédito confirmado.
+- Resgate: 500 TeddyCoins por 1 crédito de jogada.
 - Caça às TeddyCoins: limites e recompensa definidos na seção `games`.
 - Campanhas futuras: estrutura preparada em `campaigns`, inicialmente vazia.
 
@@ -19,4 +20,4 @@ Preços e quantidades de créditos permanecem em `creditPackages.ts`. O bônus �
 4. Execute TypeScript, testes e Prisma validate.
 5. Revise impacto econômico antes da publicação.
 
-Toda movimentação nova de TeddyCoins exige `source` e `referenceId`. Check-in, pagamento e jogo usam respectivamente `CHECK_IN`, `PAYMENT_ORDER` e `GAME_SESSION`.
+Toda movimentação nova de TeddyCoins exige `source` e `referenceId`. Check-in, pagamento, jogo e resgate usam respectivamente `CHECK_IN`, `PAYMENT_ORDER`, `GAME_SESSION` e `REWARD_REDEMPTION`.

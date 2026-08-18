@@ -57,7 +57,7 @@ export function getApiErrorMessage(error: unknown): string {
   const backendMessage = typeof data?.error === 'string' ? data.error : data?.error?.message ?? data?.message;
   if (status === 400) return backendMessage ?? 'Verifique os dados informados.';
   if (status === 401) return 'E-mail ou senha incorretos.';
-  if (status === 409) return 'Este e-mail ou nome de usuário já está cadastrado.';
+  if (status === 409) return backendMessage ?? 'A operação não pôde ser concluída por conflito de estado.';
   if (status >= 500) return 'O servidor encontrou um erro. Verifique o backend.';
   return backendMessage ?? `Não foi possível concluir a solicitação (HTTP ${status}).`;
 }

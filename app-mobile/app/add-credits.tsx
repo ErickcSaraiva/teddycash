@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/src/contexts/ThemeContext';
 import { getPalette } from '@/src/theme/palettes';

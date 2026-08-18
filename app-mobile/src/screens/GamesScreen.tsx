@@ -80,7 +80,7 @@ export default function GamesScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Teddy Clicker 🐻</Text>
-      <Text style={styles.subtitle}>Entrada gratuita. TeddyCoins não podem virar créditos de máquina.</Text>
+      <Text style={styles.subtitle}>Entrada gratuita. Recompensas entram como TeddyCoins e seguem as regras do programa.</Text>
 
       <TouchableOpacity 
         style={styles.gameButton} 

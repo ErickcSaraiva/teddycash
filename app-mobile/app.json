@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "teddycash",
+    "name": "TeddyCash",
     "slug": "teddycash",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.jpeg",
+    "icon": "./assets/images/icon.png",
     "scheme": "appmobile",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -12,6 +12,7 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.erick.teddycash",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -19,7 +20,10 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.CAMERA"
+      ]
     },
     "web": {
       "output": "static",
@@ -51,6 +55,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "35d63c9a-cd9d-44f7-85c5-e2c45dc0b7be"
+      }
+    },
+    "owner": "ericksaraiva"
   }
 }

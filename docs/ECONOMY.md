@@ -3,7 +3,7 @@
 ## Saldos oficiais
 
 - `creditBalance`: créditos comprados com dinheiro. Somente esse saldo pode ser debitado por uma autorização de máquina.
-- `teddyCoins`: moedas promocionais concedidas por compras, check-in, jogos e campanhas. Não podem ser convertidas em créditos nem enviadas a máquinas.
+- `teddyCoins`: moedas promocionais concedidas por compras, check-in, jogos e campanhas. Não possuem valor monetário, não podem ser sacadas nem enviadas diretamente a máquinas. O catálogo atual permite resgatar 500 TeddyCoins por 1 crédito de jogada.
 
 O backend é a fonte oficial dos dois saldos. O mobile pode manter o último valor confirmado apenas para melhorar a experiência durante carregamentos.
 
@@ -20,7 +20,7 @@ O backend é a fonte oficial dos dois saldos. O mobile pode manter o último val
 - Check-in e jogo: podem alterar somente TeddyCoins.
 - Início de jogo: gratuito; não debita nenhum dos saldos.
 - Resgate da máquina: debita somente `creditBalance`, junto com o ledger e o consumo da autorização.
-- Conversão de TeddyCoins em créditos: proibida e removida da API ativa.
+- Resgate promocional: debita 500 TeddyCoins e credita 1 crédito na mesma transação, registrando ambos os ledgers. O crédito resultante pode então seguir o fluxo normal da máquina.
 
 ## Migration da Fase 2
 

@@ -1,6 +1,7 @@
 import { isAxiosError } from 'axios';
 import api from './api';
 import { createCheckinApi } from './checkinApiCore';
+import { createRewardRedemptionApi } from './rewardRedemptionApiCore';
 export type { CheckinState } from './checkinApiCore';
 
 export type TeddyCoinTransactionType =
@@ -18,6 +19,14 @@ const checkinApi = createCheckinApi({
 });
 export const getDailyCheckinStatus = checkinApi.getStatus;
 export const claimDailyCheckin = checkinApi.claim;
+const rewardRedemptionApi = createRewardRedemptionApi({
+  async get<T>(path: string) { return (await api.get<T>(path)).data; },
+  async post<T>(path: string, body: undefined, options: { headers: { 'Idempotency-Key': string } }) {
+    return (await api.post<T>(path, body, options)).data;
+  },
+});
+export const getRewardCatalog = rewardRedemptionApi.getCatalog;
+export const redeemCreditReward = rewardRedemptionApi.redeemCredit;
 export async function getTeddyCoinTransactions(page = 1, limit = 20) { return (await api.get<TeddyCoinHistory>('/teddy-coins/transactions', { params: { page, limit } })).data; }
 
 export function getApiError<T>(error: unknown): T | null {

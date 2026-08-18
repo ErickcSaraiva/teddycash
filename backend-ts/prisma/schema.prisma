@@ -105,6 +105,7 @@ enum CreditTransactionType {
   ADMIN_ADJUSTMENT
   LEGACY_PIX_CREDIT
   LEGACY_TEDDY_COIN_REDEMPTION
+  TEDDYCOIN_CREDIT_REDEMPTION
 }
 
 enum CreditTransactionSource {
@@ -112,6 +113,7 @@ enum CreditTransactionSource {
   MACHINE_AUTHORIZATION
   ADMIN
   LEGACY
+  REWARD_REDEMPTION
 }
 
 // Ledger exclusivo dos créditos financeiros usados nas máquinas.
@@ -191,6 +193,7 @@ enum TeddyCoinTransactionSource {
   CAMPAIGN
   ADMIN
   LEGACY
+  REWARD_REDEMPTION
 }
 
 model TeddyCoinTransaction {

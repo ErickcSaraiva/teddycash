@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  AccessibilityInfo, ActivityIndicator, Alert, Platform, Pressable, SafeAreaView,
+  AccessibilityInfo, ActivityIndicator, Alert, Platform, Pressable,
   StyleSheet, Text, useWindowDimensions, View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/src/contexts/ThemeContext';
 import { getPalette } from '@/src/theme/palettes';

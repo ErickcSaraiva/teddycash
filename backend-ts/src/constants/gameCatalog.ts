@@ -1,3 +1,5 @@
+import { PROMOTIONAL_RULES } from '../config/promotionalRules';
+
 export type GameId = 'coin-collector';
 
 export type GameEventType = 'COIN_TAP' | 'OBSTACLE_TAP';
@@ -50,4 +52,3 @@ export function getGameDefinition(gameId: string): GameDefinition | null {
 export function listActiveGames(): GameDefinition[] {
   return Object.values(GAME_CATALOG).filter((game) => game.active);
 }
-import { PROMOTIONAL_RULES } from '../config/promotionalRules';
